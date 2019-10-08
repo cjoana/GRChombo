@@ -98,7 +98,6 @@ void PerfectFluid<eos_t>::add_matter_rhs(
 
     FOR2(i, j)
     {
-        // includes non conformal parts of chris not included in chris_ULL
         total_rhs.Z[i] += - vars.newlapse * (d1.V[j][j] * vars.Z[i] +
                                      d1.Z[j][i] * vars.V[j])
                           - d1.lapse[j] * vars.V[j] * vars.Z[i];
