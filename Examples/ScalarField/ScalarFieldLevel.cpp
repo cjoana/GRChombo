@@ -31,9 +31,16 @@
 void ScalarFieldLevel::specificAdvance()
 {
     // Enforce trace free A_ij and positive chi and alpha
+<<<<<<< HEAD
     BoxLoops::loop(make_compute_pack(TraceARemoval(), 
                        PositiveChiAndAlpha(m_p.min_chi, m_p.min_lapse)),
                    m_state_new, m_state_new, INCLUDE_GHOST_CELLS);
+=======
+    BoxLoops::loop(
+        make_compute_pack(TraceARemoval(),
+                          PositiveChiAndAlpha(m_p.min_chi, m_p.min_lapse)),
+        m_state_new, m_state_new, INCLUDE_GHOST_CELLS);
+>>>>>>> b93eb35b4e83c07340b0089eca96f510801e133d
 
     // Check for nan's
     if (m_p.nan_check)
@@ -94,8 +101,13 @@ void ScalarFieldLevel::specificEvalRHS(GRLevelData &a_soln, GRLevelData &a_rhs,
 
         // Enforce trace free A_ij and positive chi and alpha
         BoxLoops::loop(
+<<<<<<< HEAD
             make_compute_pack(TraceARemoval(), 
                               PositiveChiAndAlpha(m_p.min_chi, m_p.min_lapse)), 
+=======
+            make_compute_pack(TraceARemoval(),
+                              PositiveChiAndAlpha(m_p.min_chi, m_p.min_lapse)),
+>>>>>>> b93eb35b4e83c07340b0089eca96f510801e133d
             a_soln, a_soln, INCLUDE_GHOST_CELLS);
 
         // Calculate MatterCCZ4 right hand side with matter_t = ScalarField

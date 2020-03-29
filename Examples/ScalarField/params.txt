@@ -101,7 +101,10 @@ amplitudeSF = 0.001
 widthSF = 1.0
 r_zero = 5.0
 scalar_mass = 0.001
+<<<<<<< HEAD
 
+=======
+>>>>>>> feed71247d3dfa9f4e10d8e72211bf1ba7b18c31
 
 # Relaxation paramters
 # how long and how fast to relax

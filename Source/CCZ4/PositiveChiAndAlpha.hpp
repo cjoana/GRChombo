@@ -19,10 +19,18 @@ class PositiveChiAndAlpha
 
   public:
     //! Constructor for class
+<<<<<<< HEAD
     PositiveChiAndAlpha(const double a_min_chi = 1e-4, 
                         const double a_min_lapse = 1e-4) 
                         : m_min_chi(a_min_chi), m_min_lapse(a_min_lapse)
     {}
+=======
+    PositiveChiAndAlpha(const double a_min_chi = 1e-4,
+                        const double a_min_lapse = 1e-4)
+        : m_min_chi(a_min_chi), m_min_lapse(a_min_lapse)
+    {
+    }
+>>>>>>> b93eb35b4e83c07340b0089eca96f510801e133d
 
     template <class data_t> void compute(Cell<data_t> current_cell) const
     {
