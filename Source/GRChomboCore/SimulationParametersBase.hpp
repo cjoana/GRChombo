@@ -56,8 +56,10 @@ class SimulationParametersBase : public ChomboParameters
         // Dissipation
         pp.load("sigma", sigma, 0.1);
 
-        // Nan Check
+        // Nan Check and min chi and lapse values
         pp.load("nan_check", nan_check, 1);
+        pp.load("min_chi", min_chi, 1e-4);
+        pp.load("min_lapse", min_lapse, 1e-4);
 
         // extraction params
         dx.fill(coarsest_dx);
@@ -91,7 +93,7 @@ class SimulationParametersBase : public ChomboParameters
         pp.load("num_points_phi", extraction_params.num_points_phi, 2);
         pp.load("num_points_theta", extraction_params.num_points_theta, 4);
         pp.load("extraction_center", extraction_params.extraction_center,
-                {0.5 * L, 0.5 * L, 0.5 * L});
+                center); // default to center of the grid
         if (pp.contains("modes"))
         {
             pp.load("num_modes", extraction_params.num_modes);
@@ -132,6 +134,8 @@ class SimulationParametersBase : public ChomboParameters
     double sigma; // Kreiss-Oliger dissipation parameter
 
     int nan_check;
+
+    double min_chi, min_lapse;
 
     int formulation; // Whether to use BSSN or CCZ4
 

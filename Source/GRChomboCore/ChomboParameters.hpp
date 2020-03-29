@@ -93,12 +93,14 @@ class ChomboParameters
         coarsest_dx = L / max_N;
 
         pp.load("max_level", max_level, 0);
-        // the reference ratio is hard coded to 2
+        // the reference ratio is hard coded to 2 on all levels
         // in principle it can be set to other values, but this is
         // not recommended since we do not test GRChombo with other
         // refinement ratios - use other values at your own risk
         ref_ratios.resize(max_level + 1);
         ref_ratios.assign(2);
+        // read in frequency of regrid on each levels, needs
+        // max_level + 1 entries (although never regrids on max_level+1)
         pp.getarr("regrid_interval", regrid_interval, 0, max_level + 1);
 
         // time stepping outputs and regrid data
@@ -108,8 +110,7 @@ class ChomboParameters
         pp.load("plot_prefix", plot_prefix);
         pp.load("stop_time", stop_time, 1.0);
         pp.load("max_steps", max_steps, 1000000);
-        pp.load("write_plot_ghosts", write_plot_ghosts,
-                nonperiodic_boundaries_exist);
+        pp.load("write_plot_ghosts", write_plot_ghosts, false);
 
         // alias the weird chombo names to something more descriptive
         // for these box params, and default to some reasonable values
