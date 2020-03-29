@@ -50,6 +50,7 @@ data_t ScalarBubble::compute_phi(Coordinates<data_t> coords) const
 <<<<<<< HEAD
 
 =======
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
                      exp(-pow(rr - m_params.r_zero / m_params.widthSF, 2.0));
@@ -61,6 +62,8 @@ data_t ScalarBubble::compute_phi(Coordinates<data_t> coords) const
 =======
                      exp(-pow((rr - m_params.r_zero) / m_params.widthSF, 2.0));
 >>>>>>> feed71247d3dfa9f4e10d8e72211bf1ba7b18c31
+=======
+>>>>>>> 2c7551fe230a33f9cde9db356a53aa036e2ff2ce
 >>>>>>> b93eb35b4e83c07340b0089eca96f510801e133d
 
     return out_phi;
