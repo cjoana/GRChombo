@@ -51,8 +51,8 @@ template <class eos_t = DefaultEOS> class PerfectFluid
     {
         // fluid variables
         data_t density;        	// rest-mass energy density;  total fluid-energy-density = density (1 + energy)
-        data_t energy;		// internal energy
-        data_t pressure;	
+        data_t energy;		      // internal energy
+        data_t pressure;
         data_t enthalpy;
         data_t u0;
         Tensor<1, data_t> u;    // upper-case   ??

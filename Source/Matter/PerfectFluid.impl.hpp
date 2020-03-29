@@ -11,6 +11,16 @@
 #define PERFECTFLUID_IMPL_HPP_
 #include "DimensionDefinitions.hpp"
 
+
+/*
+ *  V^i =  chi * h^ij V_i     (a 3-vector in Eulerian coordinates)
+ *  while u is a 4-vector such  V_i = u_i / W   
+ *  and  v^i = (u^i / W + shift^i / lapse )    ## so  u_i = g_i\mu u^\mu   where  (g = 4-metric) 
+ * */
+
+
+
+
 // Calculate the stress energy tensor elements
 template <class eos_t>
 template <class data_t, template <typename> class vars_t>
@@ -20,14 +30,22 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
 {
     emtensor_t<data_t> out;
     GeoVars<data_t> geo_vars;
+    
+    Tensor<1, data_t> V_i;
+    FOR1(i)
+    {
+       V_i[i] = vars.Z[i] / (vars.E + vars.D + vars.pressure);
+    }
 
+
+   
     // Calculate components of EM Tensor
     // S_ij = T_ij
     FOR2(i, j)
     {
         out.Sij[i][j] =
-          vars.density * vars.enthalpy * vars.u[i] * vars.u[j]  +
-          vars.pressure * vars.h[i][j];
+          vars.density * vars.enthalpy * vars.W * vars.W * V_i[i] * V_i[j]  +
+          vars.pressure * vars.h[i][j] / vars.chi ;                               // include conformal factor into h_ij
     }
 
     // S_i (note lower index) = - n^a T_ai
@@ -58,8 +76,14 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     const auto h_UU = compute_inverse_sym(vars.h);
     const auto chris = compute_christoffel(d1.h, h_UU);
 
-	total_rhs.D = 0;
+  	total_rhs.D = 0;
     total_rhs.E = 0;
+    total_rhs.pressure = 0;
+
+    FOR1(i){
+      total_rhs.Z[i] = 0;
+      total_rhs.V[i] = 0;
+    }
 
     Tensor<2, data_t> K_tensor;
     FOR2(i, j)
@@ -137,7 +161,6 @@ void PerfectFluid<eos_t>::compute(
     auto up_vars = current_cell.template load_vars<Vars>();
 
     Tensor<1, data_t> V_i; // with lower indices : V_i
-    Tensor<1, data_t> u_contravariant; // with upper indices: u_contravariant
     data_t V2 = 0.0;
 
     // Inverse metric
@@ -146,7 +169,7 @@ void PerfectFluid<eos_t>::compute(
     data_t enthalpy = 0.0;
     data_t pressure = vars.pressure;
     data_t residual = 1e6;
-    data_t threshold_residual = 1e-3;                                                 // TODO: aribtrary value?
+    data_t threshold_residual = 1e-6;                                                 // TODO: aribtrary value?
     data_t pressure_guess;
     data_t criterion;
     bool condition = true;
@@ -166,7 +189,7 @@ void PerfectFluid<eos_t>::compute(
         V2 = 0;
         FOR2(i,j)
         {
-          V2 +=  V_i[i] * h_UU[i][j] * V_i[j];   // Check V_i is with lower indices.
+          V2 +=  V_i[i] * geo_vars.chi * h_UU[i][j] * V_i[j];   
         }
 
         if(!(V2 < 1)){
@@ -202,14 +225,18 @@ void PerfectFluid<eos_t>::compute(
     up_vars.pressure = pressure;
     up_vars.enthalpy = enthalpy;
 
-    FOR1(i) { up_vars.u[i] = V_i[i] * up_vars.W; }    // lower  indices    ///   DELETE VARIABLE   (edit S_ij)
-
-    FOR2(i, j) { u_contravariant[i] = V_i[j] * h_UU[i][j] * up_vars.W; }       // upper indices
+    FOR1(i) {
+      up_vars.V[i] = 0;             // upper indices
+      up_vars.u[i] = V_i[i] * up_vars.W;  // lower  indices    ///   DELETE VARIABLE   (edit S_ij)
+    }    
 
     up_vars.u0 = up_vars.W / geo_vars.lapse;                               ///   DELETE VERIABLE
 
-    FOR1(i) { up_vars.V[i] = u_contravariant[i] / up_vars.W                //  Upper_indices
-                              + geo_vars.shift[i] / geo_vars.lapse;  }
+    FOR2(i,j) {
+       up_vars.V[i] +=  geo_vars.chi *  h_UU[i][j] * V_i[j];      // Upper indices 
+    }
+
+
 
 
     // Overwrite new values for fluid variables
@@ -221,7 +248,8 @@ void PerfectFluid<eos_t>::compute(
     current_cell.store_vars(up_vars.u, GRInterval<c_u1, c_u3>());
     current_cell.store_vars(up_vars.u0, c_u0);
     current_cell.store_vars(up_vars.W, c_W);
-}
+
+    }
 
 
 #endif /* PERFECTFLUID_IMPL_HPP_ */
