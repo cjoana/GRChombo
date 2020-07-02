@@ -26,7 +26,7 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     FOR2(i, j)
     {
         out.Sij[i][j] =
-          vars.density * vars.enthalpy * vars.u[i] * vars.u[j]  +     
+          vars.density * vars.enthalpy * vars.u[i] * vars.u[j]  +
           vars.pressure * vars.h[i][j];
     }
 
@@ -58,7 +58,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     const auto h_UU = compute_inverse_sym(vars.h);
     const auto chris = compute_christoffel(d1.h, h_UU);
 
-	total_rhs.D = 0;
+	  total_rhs.D = 0;
     total_rhs.E = 0;
 
     Tensor<2, data_t> K_tensor;
@@ -67,22 +67,20 @@ void PerfectFluid<eos_t>::add_matter_rhs(
       K_tensor[i][j] = (vars.A[i][j] + vars.h[i][j] * vars.K / 3.) / vars.chi;
     }
 
-    total_rhs.D += advec.D + vars.newlapse * vars.K * vars.D;
-    total_rhs.E += advec.E + vars.newlapse * vars.K *
+    total_rhs.D += advec.D + vars.lapse * vars.K * vars.D;
+    total_rhs.E += advec.E + vars.lapse * vars.K *
                             (vars.pressure + vars.E);
-
-
 
     FOR1(i)
     {
-        total_rhs.D += - vars.newlapse * (d1.D[i] * vars.V[i]
+        total_rhs.D += - vars.lapse * (d1.D[i] * vars.V[i]
                                     + vars.D * d1.V[i][i])
                        - d1.lapse[i] * vars.D * vars.V[i];
 
-        total_rhs.E += - vars.newlapse * (d1.E[i] * vars.V[i]
+        total_rhs.E += - vars.lapse * (d1.E[i] * vars.V[i]
                                     + vars.E * d1.V[i][i])
                        - d1.lapse[i] * vars.E * vars.V[i]
-                       - vars.newlapse * (d1.pressure[i] * vars.V[i]
+                       - vars.lapse * (d1.pressure[i] * vars.V[i]
                                     + vars.pressure * d1.V[i][i])
                        - d1.lapse[i] * vars.pressure * vars.V[i]
                        - (vars.D + vars.E + vars.pressure) *
@@ -90,35 +88,35 @@ void PerfectFluid<eos_t>::add_matter_rhs(
 
 
         total_rhs.Z[i] += advec.Z[i]
-                       + vars.newlapse * d1.pressure[i]
+                       + vars.lapse * d1.pressure[i]
                        + d1.lapse[i] * vars.pressure
                        - (vars.E + vars.D) * d1.lapse[i]
-                       + vars.newlapse * vars.K * vars.Z[i];
+                       + vars.lapse * vars.K * vars.Z[i];
     }
 
     FOR2(i, j)
     {
-        total_rhs.Z[i] += - vars.newlapse * (d1.V[j][j] * vars.Z[i] +
+        total_rhs.Z[i] += - vars.lapse * (d1.V[j][j] * vars.Z[i] +
                                      d1.Z[j][i] * vars.V[j])
                           - d1.lapse[j] * vars.V[j] * vars.Z[i];
 
-        total_rhs.D += - vars.newlapse * vars.D * vars.V[j] *
+        total_rhs.D += - vars.lapse * vars.D * vars.V[j] *
                             chris.ULL[i][i][j];
 
-        total_rhs.E += - vars.newlapse * vars.E * vars.V[j] *
+        total_rhs.E += - vars.lapse * vars.E * vars.V[j] *
                             chris.ULL[i][i][j]
-                       - vars.newlapse * vars.pressure * vars.V[j] *
+                       - vars.lapse * vars.pressure * vars.V[j] *
                             chris.ULL[i][i][j]
                        + (vars.D + vars.E + vars.pressure) *
-                            vars.newlapse * vars.V[i] * vars.V[j] *
+                            vars.lapse * vars.V[i] * vars.V[j] *
                             K_tensor[i][j];
 
 
         FOR1(k)
         {
-          total_rhs.Z[i] += - vars.newlapse * vars.Z[i] *
+          total_rhs.Z[i] += - vars.lapse * vars.Z[i] *
                                   vars.V[j] * chris.ULL[k][k][j]
-                            + vars.newlapse * vars.V[j] *
+                            + vars.lapse * vars.V[j] *
                                   vars.Z[k] * chris.ULL[k][j][i];
         }
     }
@@ -190,7 +188,7 @@ void PerfectFluid<eos_t>::compute(
 
     FOR1(i) { up_vars.u[i] = V_i[i] * up_vars.W; }
 
-    up_vars.u0 = up_vars.W / vars.newlapse;
+    up_vars.u0 = up_vars.W / geo_vars.lapse;
 
     FOR1(i) { up_vars.V[i] = up_vars.u[i] / geo_vars.lapse / up_vars.u0
                               + geo_vars.shift[i] / geo_vars.lapse;  }
