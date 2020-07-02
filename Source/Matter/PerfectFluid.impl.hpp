@@ -19,14 +19,20 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     const Tensor<2, data_t> &h_UU, const Tensor<3, data_t> &chris_ULL) const
 {
     emtensor_t<data_t> out;
-    GeoVars<data_t> geo_vars;
+    Tensor<1, data_t> u_i;   // 4-velocity with lower indices
+
+    FOR1(i)
+    {
+      u_i[i] = vars.Z[i] * vars.W / (vars.E + vars.D + vars.pressure);
+    }
+
 
     // Calculate components of EM Tensor
     // S_ij = T_ij
     FOR2(i, j)
     {
         out.Sij[i][j] =
-          vars.density * vars.enthalpy * vars.u[i] * vars.u[j]  +
+          vars.density * vars.enthalpy *   u_i[i] * u_i[j] +
           vars.pressure * vars.h[i][j];
     }
 
@@ -135,6 +141,9 @@ void PerfectFluid<eos_t>::compute(
 
     Tensor<1, data_t> V_i; // with lower indices: V_i
     data_t V2 = 0.0;
+    Tensor<1, data_t> u_i; // 4-velocity with lower indices: u_i
+    data_t u0 = 0.0; // 0-comp of 4-velocity (lower index)
+
 
     // Inverse metric
     const auto h_UU = TensorAlgebra::compute_inverse_sym(geo_vars.h);
@@ -186,11 +195,11 @@ void PerfectFluid<eos_t>::compute(
     up_vars.pressure = pressure;
     up_vars.enthalpy = enthalpy;
 
-    FOR1(i) { up_vars.u[i] = V_i[i] * up_vars.W; }
 
-    up_vars.u0 = up_vars.W / geo_vars.lapse;
+    FOR1(i) { u_i[i] = V_i[i] * up_vars.W; }
+    u0 = up_vars.W / geo_vars.lapse;
 
-    FOR1(i) { up_vars.V[i] = up_vars.u[i] / geo_vars.lapse / up_vars.u0
+    FOR1(i) { up_vars.V[i] = u_i[i] / geo_vars.lapse / u0
                               + geo_vars.shift[i] / geo_vars.lapse;  }
 
 
@@ -200,8 +209,6 @@ void PerfectFluid<eos_t>::compute(
     current_cell.store_vars(up_vars.pressure, c_pressure);
     current_cell.store_vars(up_vars.enthalpy, c_enthalpy);
     current_cell.store_vars(up_vars.V, GRInterval<c_V1, c_V3>());
-    current_cell.store_vars(up_vars.u, GRInterval<c_u1, c_u3>());
-    current_cell.store_vars(up_vars.u0, c_u0);
     current_cell.store_vars(up_vars.W, c_W);
 }
 

@@ -54,18 +54,21 @@ template <class eos_t = DefaultEOS> class PerfectFluid
         data_t energy;
         data_t pressure;
         data_t enthalpy;
-        data_t u0;
-        Tensor<1, data_t> u;
 
         // defined vars for evol. eq.
         data_t W;
-        data_t Z0;
         Tensor<1, data_t> V;
 
         // evolving vars
         data_t D;
         data_t E;
         Tensor<1, data_t> Z;
+
+        // not needed
+        data_t Z0_unused;                      // not needed
+        data_t u0_unused;                      // not needed
+        Tensor<1, data_t> u_unused;            // not needed
+
 
        /// Defines the mapping between members of Vars and Chombo grid
        /// variables (enum in User_Variables)
@@ -81,12 +84,8 @@ template <class eos_t = DefaultEOS> class PerfectFluid
               pressure);
            VarsTools::define_enum_mapping(mapping_function, c_enthalpy,
               enthalpy);
-           VarsTools::define_enum_mapping(mapping_function, c_u0, u0);
-           VarsTools::define_enum_mapping(mapping_function,
-             GRInterval<c_u1, c_u3>(), u);
 
            VarsTools::define_enum_mapping(mapping_function, c_W, W);
-           VarsTools::define_enum_mapping(mapping_function, c_Z0, Z0);
            VarsTools::define_enum_mapping(mapping_function,
              GRInterval<c_V1, c_V3>(), V);
 
@@ -94,6 +93,13 @@ template <class eos_t = DefaultEOS> class PerfectFluid
            VarsTools::define_enum_mapping(mapping_function, c_E, E);
            VarsTools::define_enum_mapping(mapping_function,
              GRInterval<c_Z1, c_Z3>(), Z);
+
+
+        // not needed
+        VarsTools::define_enum_mapping(mapping_function, c_Z0, Z0_unused);
+        VarsTools::define_enum_mapping(mapping_function, c_u0, u0_unused);
+        VarsTools::define_enum_mapping(mapping_function,
+          GRInterval<c_u1, c_u3>(), u_unused);
 
        }
    };
