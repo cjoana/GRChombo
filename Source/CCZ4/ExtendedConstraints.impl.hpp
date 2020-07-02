@@ -34,10 +34,14 @@ void Constraints::compute(Cell<data_t> current_cell) const
     current_cell.store_vars(out.Mom, GRInterval<c_Mom1, c_Mom3>());
 
     // Extended output
-    current_cell.store_vars(out.Ham_ricci, c_Ham_ricci);
-    current_cell.store_vars(out.Ham_K, c_Ham_K);
-    current_cell.store_vars(out.Ham_trA2, c_Ham_trA2);
-
+    // current_cell.store_vars(out.Ham_ricci, c_Ham_ricci);
+    // current_cell.store_vars(out.Ham_K, c_Ham_K);
+    // current_cell.store_vars(out.Ham_trA2, c_Ham_trA2);
+    current_cell.store_vars(out.ricci_scalar, c_ricci_scalar);
+    current_cell.store_vars(out.rho, c_rho);
+    current_cell.store_vars(out.S, c_S);
+    current_cell.store_vars(out.trA2, c_trA2);
+    current_cell.store_vars(out.HamRel, c_HamRel);
 }
 
 template <class data_t, template <typename> class vars_t,
@@ -48,7 +52,7 @@ Constraints::constraints_t<data_t> Constraints::constraint_equations(
 {
     constraints_t<data_t> out;
 
-    const data_t chi_regularised = simd_max(1e-6, vars.chi);
+    const data_t chi_regularised = simd_max(1e-12, vars.chi);
 
     auto h_UU = TensorAlgebra::compute_inverse_sym(vars.h);
     auto chris = TensorAlgebra::compute_christoffel(d1.h, h_UU);
@@ -62,10 +66,6 @@ Constraints::constraints_t<data_t> Constraints::constraint_equations(
               (GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM - tr_A2;
     out.Ham -= 2 * m_cosmological_constant;
 
-    //Extended Output Ham
-    out.Ham_ricci = ricci.scalar;
-    out.Ham_K = (GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM;
-    out.Ham_trA2 = - tr_A2;
 
     Tensor<2, data_t> covd_A[CH_SPACEDIM];
     FOR3(i, j, k)
@@ -85,6 +85,18 @@ Constraints::constraints_t<data_t> Constraints::constraint_equations(
                       (covd_A[k][j][i] - GR_SPACEDIM * vars.A[i][j] *
                                              d1.chi[k] / (2 * chi_regularised));
     }
+
+
+    //Extended Output Ham
+    // out.Ham_ricci = ricci.scalar;
+    // out.Ham_K = (GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM;
+    // out.Ham_trA2 = - tr_A2;
+    out.HamRel = pow(ricci.scalar, 2) +
+              pow((GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM, 2)
+               + pow(tr_A2, 2);
+    //out.HamRel += pow(2 * m_cosmological_constant, 2);
+    out.ricci_scalar = ricci.scalar;
+    out.trA2 = tr_A2;
 
     return out;
 }
