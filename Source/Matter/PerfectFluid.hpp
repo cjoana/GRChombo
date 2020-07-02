@@ -65,9 +65,9 @@ template <class eos_t = DefaultEOS> class PerfectFluid
         Tensor<1, data_t> Z;
 
         // not needed
-        data_t Z0_unused;                      // not needed
-        data_t u0_unused;                      // not needed
-        Tensor<1, data_t> u_unused;            // not needed
+        // data_t Z0_unused;                      // not needed
+        // data_t u0_unused;                      // not needed
+        // Tensor<1, data_t> u_unused;            // not needed
 
 
        /// Defines the mapping between members of Vars and Chombo grid
@@ -96,10 +96,10 @@ template <class eos_t = DefaultEOS> class PerfectFluid
 
 
         // not needed
-        VarsTools::define_enum_mapping(mapping_function, c_Z0, Z0_unused);
-        VarsTools::define_enum_mapping(mapping_function, c_u0, u0_unused);
-        VarsTools::define_enum_mapping(mapping_function,
-          GRInterval<c_u1, c_u3>(), u_unused);
+        // VarsTools::define_enum_mapping(mapping_function, c_Z0, Z0_unused);
+        // VarsTools::define_enum_mapping(mapping_function, c_u0, u0_unused);
+        // VarsTools::define_enum_mapping(mapping_function,
+        //   GRInterval<c_u1, c_u3>(), u_unused);
 
        }
    };
