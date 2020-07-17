@@ -168,6 +168,8 @@ void PerfectFluid<eos_t>::compute(
         {
           V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure_guess);
         }
+
+        V2 = 0;
         FOR2(i,j)
         {
           V2 +=  V_i[i] * h_UU[i][j] * V_i[j];
@@ -178,6 +180,13 @@ void PerfectFluid<eos_t>::compute(
         up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
                          + pressure_guess * (1 - up_vars.W * up_vars.W))
                          / vars.D / up_vars.W;
+
+        if (V2 >= 1) {
+
+          std::cout << "V2 bigger than 1 !!!" << '\n';
+
+        }
+
 
 
         my_eos.compute_eos(pressure, enthalpy, up_vars);
