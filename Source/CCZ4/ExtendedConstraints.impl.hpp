@@ -37,7 +37,9 @@ void Constraints::compute(Cell<data_t> current_cell) const
     // current_cell.store_vars(out.Ham_ricci, c_Ham_ricci);
     // current_cell.store_vars(out.Ham_K, c_Ham_K);
     // current_cell.store_vars(out.Ham_trA2, c_Ham_trA2);
+
     current_cell.store_vars(out.ricci_scalar, c_ricci_scalar);
+    //current_cell.store_vars(out.ricci_scalar_tilde, c_ricci_scalar_tilde);
     current_cell.store_vars(out.rho, c_rho);
     current_cell.store_vars(out.S, c_S);
     current_cell.store_vars(out.trA2, c_trA2);
@@ -95,7 +97,8 @@ Constraints::constraints_t<data_t> Constraints::constraint_equations(
               pow((GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM, 2)
                + pow(tr_A2, 2);
     //out.HamRel += pow(2 * m_cosmological_constant, 2);
-    out.ricci_scalar = ricci.scalar;
+    out.ricci_scalar = ricci.scalar_tilde;
+    //out.ricci_scalar_tilde = ricci.scalar_tilde;
     out.trA2 = tr_A2;
 
     return out;

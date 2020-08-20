@@ -24,6 +24,10 @@ template <class data_t> struct ricci_t
 {
     Tensor<2, data_t> LL; // Ricci with two indices down
     data_t scalar;        // Ricci scalar
+    Tensor<2, data_t> ricci_tilde;
+    Tensor<2, data_t> ricci_chi;
+    data_t scalar_tilde;
+    data_t scalar_chi;
 };
 
 class CCZ4Geometry
@@ -100,9 +104,13 @@ class CCZ4Geometry
 
             out.LL[i][j] =
                 (ricci_chi + vars.chi * ricci_tilde + z_terms) / vars.chi;
+	    out.ricci_tilde = ricci_tilde;
+ 	    out.ricci_chi = ricci_chi;
         }
 
         out.scalar = vars.chi * TensorAlgebra::compute_trace(out.LL, h_UU);
+	out.scalar_tilde = vars.chi * TensorAlgebra::compute_trace(out.ricci_tilde, h_UU);
+	out.scalar_chi = vars.chi * TensorAlgebra::compute_trace(out.ricci_chi, h_UU);
 
         return out;
     }

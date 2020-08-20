@@ -56,8 +56,9 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     // current_cell.store_vars(out.Ham_ricci, c_Ham_ricci);
     // current_cell.store_vars(out.Ham_K, c_Ham_K);
     // current_cell.store_vars(out.Ham_trA2, c_Ham_trA2);
-    // current_cell.store_vars(out.Ham_rho, c_Ham_rho);
+    // current_cell.store_vars(out.Ham_rho, c_Ham_rho); 
     current_cell.store_vars(out.ricci_scalar, c_ricci_scalar);
+    //current_cell.store_vars(out.ricci_scalar_tilde, c_ricci_scalar_tilde);
     current_cell.store_vars(out.rho, c_rho);
     current_cell.store_vars(out.trA2, c_trA2);
     current_cell.store_vars(out.S, c_S);

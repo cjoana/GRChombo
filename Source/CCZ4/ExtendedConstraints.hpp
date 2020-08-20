@@ -34,7 +34,8 @@ class Constraints
         data_t Ham;
         // data_t Ham_K, Ham_rho, Ham_trA2, Ham_ricci;
         data_t rho, trA2, ricci_scalar, S, HamRel;
-        Tensor<1, data_t> Mom;
+        //data_t ricci_scalar_tilde;
+	Tensor<1, data_t> Mom;
     };
 
     Constraints(double dx, double cosmological_constant = 0);
