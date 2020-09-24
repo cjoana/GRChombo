@@ -97,9 +97,15 @@ Constraints::constraints_t<data_t> Constraints::constraint_equations(
               pow((GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM, 2)
                + pow(tr_A2, 2);
     //out.HamRel += pow(2 * m_cosmological_constant, 2);
-    out.ricci_scalar = ricci.scalar_tilde;
-    //out.ricci_scalar_tilde = ricci.scalar_tilde;
+    out.ricci_scalar = ricci.scalar;
+    out.ricci_scalar_tilde = ricci.scalar_tilde;
+    out.modul_TF = ricci.modul_TF;
     out.trA2 = tr_A2;
+
+
+    // MODIFICATION!!
+    out.Ham = icci.modul_TF;
+    out.ricci_scalar = ricci.scalar_tilde;
 
     return out;
 }

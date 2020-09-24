@@ -26,8 +26,13 @@ template <class data_t> struct ricci_t
     data_t scalar;        // Ricci scalar
     Tensor<2, data_t> ricci_tilde;
     Tensor<2, data_t> ricci_chi;
+    Tensor<2, data_t> ricci_TF;
     data_t scalar_tilde;
     data_t scalar_chi;
+    data_t scalar_TF;
+    data_t modul_tilde;
+    data_t modul_chi;
+    data_t modul_TF;
 };
 
 class CCZ4Geometry
@@ -104,13 +109,31 @@ class CCZ4Geometry
 
             out.LL[i][j] =
                 (ricci_chi + vars.chi * ricci_tilde + z_terms) / vars.chi;
-	    out.ricci_tilde = ricci_tilde;
- 	    out.ricci_chi = ricci_chi;
+	          out.ricci_tilde[i][j] = ricci_tilde;
+ 	          out.ricci_chi[i][j] = ricci_chi;
+            out.ricci_TF [i][j] =
+                (ricci_chi + vars.chi * ricci_tilde + z_terms) / vars.chi;;
         }
 
         out.scalar = vars.chi * TensorAlgebra::compute_trace(out.LL, h_UU);
-	out.scalar_tilde = vars.chi * TensorAlgebra::compute_trace(out.ricci_tilde, h_UU);
-	out.scalar_chi = vars.chi * TensorAlgebra::compute_trace(out.ricci_chi, h_UU);
+	      out.scalar_tilde = vars.chi * TensorAlgebra::compute_trace(out.ricci_tilde, h_UU);
+	      out.scalar_chi = vars.chi * TensorAlgebra::compute_trace(out.ricci_chi, h_UU);
+
+
+        data_t m_TF = 0;
+        data_t m_tilde = 0;
+        data_t m_chi = 0;
+        FOR2(i, j)
+        {
+          out.ricci_TF[i][j] += out.ricci_TF [i][j]  - vars.h[i][j] * out.scalar/GR_SPACEDIM;
+          m_TF += out.ricci_TF[i][j] * out.ricci_TF[i][j];
+          m_tilde += out.ricci_tilde[i][j] * out.ricci_tilde[i][j];
+          m_chi += out.ricci_chi[i][j] * out.ricci_chi[i][j];
+        }
+
+        out.modul_TF = m_TF; // pow(m_TF, 0.5);
+        out.modul_tilde =  m_tilde; // pow(m_tilde, 0.5);
+        out.modul_chi = m_chi; // pow(m_chi, 0.5);
 
         return out;
     }
