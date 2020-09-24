@@ -138,6 +138,7 @@ void PerfectFluid<eos_t>::compute(
     const auto vars = current_cell.template load_vars<Vars>();
     const auto geo_vars = current_cell.template load_vars<GeoVars>();
     auto up_vars = current_cell.template load_vars<Vars>();
+    auto nw_vars = current_cell.template load_vars<Vars>();
 
     Tensor<1, data_t> V_i; // with lower indices: V_i
     data_t V2 = 0.0;
@@ -149,14 +150,21 @@ void PerfectFluid<eos_t>::compute(
     const auto h_UU = TensorAlgebra::compute_inverse_sym(geo_vars.h);
 
     data_t enthalpy = 0.0;
-    data_t pressure = vars.pressure;
+    data_t pressure = vars.pressure;   // guess
     data_t residual = 1e6;
-    data_t threshold_residual = 1e-4;                                                 // TODO: aribtrary value?
+    data_t threshold_residual = 1e-2;                                                 // TODO: aribtrary value?
     data_t pressure_guess;
     data_t criterion;
     bool condition = true;
 
     int cont = 0;
+    int flag = 0;
+    double delta = 0.01;
+    Tensor<1, data_t> V_i_nw; // with lower indices: V_i
+    data_t W_nw, density_nw, energy_nw, residual_nw;
+    data_t pressure_guess_nw = 0.0;
+
+    // double fact = 1;
 
     /* Iterative minimization of the residual to calculate the Presseure
       (See Alcubierre p. 245) */
@@ -164,16 +172,29 @@ void PerfectFluid<eos_t>::compute(
 
         pressure_guess = pressure;
 
-        FOR1(i)
-        {
-          V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure_guess);
+        // Evaluate for guess pressure
+        V2 = 10;
+        while (V2 >=1) {
+
+          FOR1(i)
+          {
+            V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure_guess);
+          }
+
+          V2 = 0;
+          FOR2(i,j)
+          {
+            V2 +=  V_i[i] * h_UU[i][j] * V_i[j];
+          }
+          pressure_guess = pressure_guess - pressure_guess * threshold_residual;
+          flag += 1;
         }
 
-        V2 = 0;
-        FOR2(i,j)
-        {
-          V2 +=  V_i[i] * h_UU[i][j] * V_i[j];
+        if (flag>1){
+          std::cout << "it = " << cont << ",  -> V2 bigger than 1 !!!" << '\n';
+          flag = 0;
         }
+
 
         up_vars.W = 1.0 / sqrt(1.0 - V2);
         up_vars.density = vars.D / up_vars.W;
@@ -181,28 +202,86 @@ void PerfectFluid<eos_t>::compute(
                          + pressure_guess * (1 - up_vars.W * up_vars.W))
                          / vars.D / up_vars.W;
 
-        if (V2 >= 1) {
 
-          std::cout << "V2 bigger than 1 !!!" << '\n';
+         // Same for guess pressure 2
+        pressure_guess_nw  = pressure_guess + delta * pressure_guess;
+         V2 = 10;
+         while (V2 >=1) {
 
-        }
+           FOR1(i)
+           {
+             V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure_guess_nw);
+           }
+
+           V2 = 0;
+           FOR2(i,j)
+           {
+             V2 +=  V_i[i] * h_UU[i][j] * V_i[j];
+           }
+           pressure_guess_nw = pressure_guess_nw + pressure_guess_nw * threshold_residual;
+
+           // flag += 1;
+         }
+
+         // if (flag>1){
+         //   std::cout << "!! it = " << cont << ",  -> V2 bigger than 1 !!!" << '\n';
+         //   flag = 0;
+         // }
+
+         nw_vars.W = 1.0 / sqrt(1.0 - V2);
+         nw_vars.density = vars.D / nw_vars.W;
+         nw_vars.energy = (vars.E + vars.D * ( 1 - nw_vars.W)
+                          + pressure_guess_nw * (1 - nw_vars.W * nw_vars.W))
+                          / vars.D / nw_vars.W;
 
 
 
+        // fact = 1;
         my_eos.compute_eos(pressure, enthalpy, up_vars);
         residual =  (pressure - pressure_guess);
-        pressure += 0.5 * residual;
+        my_eos.compute_eos(pressure, enthalpy, nw_vars);
+        residual_nw =  (pressure - pressure_guess_nw);
 
+        if (residual > threshold_residual) {
+
+          pressure = pressure_guess -
+                     residual * (pressure_guess_nw -
+                             pressure_guess) / ( residual_nw - residual );
+        }
 
         criterion = simd_compare_gt(
                 abs(residual), threshold_residual );
-
         condition = criterion;
+
+
         cont += 1;
+
+
+        //
+        // if (V2 >= 1) {
+        //
+        //   std::cout << "it = " << cont << ",  -> V2 bigger than 1 !!!" << '\n';
+        //   //std::cout << " p = " << pressure_guess << '\n';
+        //   //std::cout << " D+E = " << vars.E + vars.D << '\n';
+        //   // fact *= 10;
+        //   pressure = fabs(pressure_guess) * 10.;
+        //   std::cout << " p (new) = " << pressure << '\n';
+        //
+        // }
+
+
+
+
     }
 
     up_vars.pressure = pressure;
     up_vars.enthalpy = enthalpy;
+
+
+    FOR1(i)
+    {
+      V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure);
+    }
 
 
     FOR1(i) { u_i[i] = V_i[i] * up_vars.W; }
