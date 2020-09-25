@@ -72,7 +72,7 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     current_cell.store_vars(out.HamRel, c_HamRel);
 
     current_cell.store_vars( pow(out.modul_TF, 0.5), c_ricci_TF);
-    current_cell.store_vars(out.scalar_tilde, c_ricci_scalar_tilde);
+    current_cell.store_vars(out.ricci_scalar_tilde, c_ricci_scalar_tilde);
 
 }
 
