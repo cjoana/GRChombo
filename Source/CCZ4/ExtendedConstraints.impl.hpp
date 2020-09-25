@@ -104,7 +104,7 @@ Constraints::constraints_t<data_t> Constraints::constraint_equations(
 
 
     // MODIFICATION!!
-    out.Ham = icci.modul_TF;
+    out.Ham = ricci.modul_TF;
     out.ricci_scalar = ricci.scalar_tilde;
 
     return out;
