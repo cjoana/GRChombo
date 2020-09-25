@@ -102,11 +102,6 @@ Constraints::constraints_t<data_t> Constraints::constraint_equations(
     out.modul_TF = ricci.modul_TF;
     out.trA2 = tr_A2;
 
-
-    // MODIFICATION!!
-    out.Ham = ricci.modul_TF;
-    out.ricci_scalar = ricci.scalar_tilde;
-
     return out;
 }
 

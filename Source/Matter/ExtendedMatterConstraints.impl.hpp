@@ -48,6 +48,13 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     // Momentum constraints
     FOR1(i) { out.Mom[i] += -8.0 * M_PI * m_G_Newton * emtensor.Si[i]; }
 
+
+    //
+    // // MODIFICATION!!
+    // out.Ham = out.modul_TF;
+    // out.ricci_scalar = out.scalar_tilde;
+    //
+
     // Write the rhs into the output FArrayBox
     current_cell.store_vars(out.Ham, c_Ham);
     current_cell.store_vars(out.Mom, GRInterval<c_Mom1, c_Mom3>());
@@ -56,13 +63,17 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     // current_cell.store_vars(out.Ham_ricci, c_Ham_ricci);
     // current_cell.store_vars(out.Ham_K, c_Ham_K);
     // current_cell.store_vars(out.Ham_trA2, c_Ham_trA2);
-    // current_cell.store_vars(out.Ham_rho, c_Ham_rho); 
+    // current_cell.store_vars(out.Ham_rho, c_Ham_rho);
     current_cell.store_vars(out.ricci_scalar, c_ricci_scalar);
     //current_cell.store_vars(out.ricci_scalar_tilde, c_ricci_scalar_tilde);
     current_cell.store_vars(out.rho, c_rho);
     current_cell.store_vars(out.trA2, c_trA2);
     current_cell.store_vars(out.S, c_S);
     current_cell.store_vars(out.HamRel, c_HamRel);
+
+    current_cell.store_vars( pow(out.modul_TF, 0.5), c_ricci_TF);
+    current_cell.store_vars(out.scalar_tilde, c_ricci_scalar_tilde);
+
 }
 
 #endif /* MATTERCONSTRAINTS_IMPL_HPP_ */
