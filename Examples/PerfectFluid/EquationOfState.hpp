@@ -27,11 +27,15 @@ class EquationOfState
     //! Set the potential function for the scalar field here
     template <class data_t, template <typename> class vars_t>
     void compute_eos(data_t &pressure, data_t &enthalpy,
+		    	 data_t &dpdrho, data_t &dpdenergy,
                            const vars_t<data_t> &vars) const
    {
 
 	       pressure = m_params.omega * vars.density;
 	       enthalpy = m_params.mass + vars.energy + pressure / vars.density;
+
+         dpdrho = m_params.omega * ( 1  + vars.energy);
+         dpdenergy = m_params.omega * vars.density ;
 
    }
 };

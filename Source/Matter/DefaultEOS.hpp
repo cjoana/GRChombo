@@ -18,11 +18,15 @@ class DefaultEOS
     //! Set the potential function for the scalar field here to zero
     template <class data_t, template <typename> class vars_t>
     void compute_eos(data_t &pressure, data_t &enthalpy,
+                           data_t &dpdrho,  data_t &dpdenergy,
                            const vars_t<data_t> &vars) const
     {
         // The default dust EOS
         pressure = 0.0;
         enthalpy = 1.0;  // mass + energy + pressure/density
+        dpdrho = 0;
+        dpdenergy = 0;
+
     }
 };
 
