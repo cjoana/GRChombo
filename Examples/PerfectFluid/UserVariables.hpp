@@ -44,15 +44,17 @@ enum
     c_B3,
 
     c_density,  c_energy, c_pressure, c_enthalpy,
-    c_u0, c_u1, c_u2, c_u3,
+    
+    // c_u0, c_u1, c_u2, c_u3,
 
     c_D,  c_E, c_W,
-    c_Z0, c_Z1, c_Z2, c_Z3,
+    //c_Z0, 
+    c_Z1, c_Z2, c_Z3,
     c_V1, c_V2, c_V3,
 
     c_Ham,
 
-    // c_Ham_ricci, c_Ham_trA2, c_Ham_K, c_Ham_rho,       //Extended
+    c_ricci_scalar, c_trA2, c_S, c_rho, c_HamRel,    //Extended
 
     c_Mom1,
     c_Mom2,
@@ -84,17 +86,19 @@ static constexpr char const *variable_names[NUM_VARS] = {
 
     "density",  "energy", "pressure", "enthalpy",
 
-    "u0", "u1", "u2", "u3",
+    //"u0", "u1", "u2", "u3",
 
     "D",  "E", "W",
-    "Z0", "Z1","Z2", "Z3",
+    //"Z0", 
+    "Z1","Z2", "Z3",
     "V1", "V2","V3",
 
     "Ham",
 
-    // "Ham_ricci", "Ham_trA2", "Ham_K", "Ham_rho",  // Extended!
+    "ricci_scalar", "trA2", "S", "rho", "HamRel",   // Extended!
 
     "Mom1",   "Mom2",   "Mom3"
+
   };
 }
 

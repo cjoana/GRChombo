@@ -29,7 +29,6 @@ class PerfectFluidLevel : public GRAMRLevel
     // Inherit the contructors from GRAMRLevel
     using GRAMRLevel::GRAMRLevel;
 
-    // FIXME: Remove?
     // // Typedef for scalar field
     typedef PerfectFluid<EquationOfState> PerfectFluidWithEOS;
 

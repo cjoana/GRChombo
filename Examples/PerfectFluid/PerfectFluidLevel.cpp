@@ -14,11 +14,12 @@
 #include "MatterCCZ4.hpp"
 
 // For constraints calculation
-#include "MatterConstraints.hpp"
-// #include "ExtendedMatterConstraints.hpp"
+//#include "MatterConstraints.hpp"
+#include "ExtendedMatterConstraints.hpp"
 
 // Problem specific includes
 #include "ChiRelaxation.hpp"   // $GRCHOMBO/Source/Matter/
+#include "ChiExtractionTaggingCriterion.hpp"
 #include "ComputePack.hpp"
 #include "SetValue.hpp"
 #include "PerfectFluid.hpp"     // $GRCHOMBO/Source/Matter/
@@ -81,7 +82,7 @@ void PerfectFluidLevel::specificEvalRHS(GRLevelData &a_soln, GRLevelData &a_rhs,
         PerfectFluidWithEOS perfect_fluid(eos);
         ChiRelaxation<PerfectFluidWithEOS> relaxation(
             perfect_fluid, m_dx, m_p.relaxspeed, m_p.G_Newton);
-        SetValue set_other_values_zero(0.0, Interval(c_h11, c_Mom3));  
+        SetValue set_other_values_zero(0.0, Interval(c_h11, c_Mom3));
         auto compute_pack1 =
             make_compute_pack(relaxation, set_other_values_zero);
         BoxLoops::loop(compute_pack1, a_soln, a_rhs, EXCLUDE_GHOST_CELLS);
@@ -107,10 +108,10 @@ void PerfectFluidLevel::specificEvalRHS(GRLevelData &a_soln, GRLevelData &a_rhs,
         BoxLoops::loop(compute_pack2, a_soln, a_rhs, EXCLUDE_GHOST_CELLS);
 
 
-        BoxLoops::loop(perfect_fluid, m_state_new, m_state_new,
-                       EXCLUDE_GHOST_CELLS, disable_simd());
-        // BoxLoops::loop(perfect_fluid,
-        //                m_state_new, m_state_new, EXCLUDE_GHOST_CELLS);
+        //BoxLoops::loop(perfect_fluid, m_state_new, m_state_new,
+        //               EXCLUDE_GHOST_CELLS, disable_simd());
+        // Commented out to check symbreak [13.Jan.2020]
+
     }
 }
 
@@ -129,24 +130,22 @@ void PerfectFluidLevel::specificUpdateODE(GRLevelData &a_soln,
                        perfect_fluid, m_dx, m_p.G_Newton),
                    a_soln, a_soln, INCLUDE_GHOST_CELLS);
 
+
     BoxLoops::loop(perfect_fluid, a_soln, a_soln,
                      EXCLUDE_GHOST_CELLS, disable_simd());
-    // BoxLoops::loop(perfect_fluid,
-    //               a_soln, a_soln, INCLUDE_GHOST_CELLS);
 }
 
 // Specify if you want any plot files to be written, with which vars
 void PerfectFluidLevel::specificWritePlotHeader(
     std::vector<int> &plot_states) const
 {
-    plot_states = {c_density, c_K};
+    plot_states = {c_chi, c_K, c_density, c_energy, c_pressure, c_enthalpy, c_D, c_E, c_W, c_rho, c_S, c_trA2, c_HamRel, c_ricci_scalar, c_Ham};
 }
 
 void PerfectFluidLevel::computeTaggingCriterion(FArrayBox &tagging_criterion,
                                                const FArrayBox &current_state)
 {
-                                                                                    // TODO: set-up a good tagging criterion
-    // BoxLoops::loop(PhiAndKTaggingCriterion(m_dx, m_p.regrid_threshold_phi,
-    //                                        m_p.regrid_threshold_K),
-    //                current_state, tagging_criterion);
+    BoxLoops::loop(
+        ChiExtractionTaggingCriterion(m_dx, m_level, m_p.extraction_params),
+        current_state, tagging_criterion);
 }
