@@ -170,6 +170,19 @@ template <class eos_t = DefaultEOS> class PerfectFluid
    template <class data_t>
    void compute(Cell<data_t> current_cell) const;
 
+
+    //! The which uses newton-rapshon method (2dim) to recover primary variables
+    //! such the pressure
+    template <class data_t>
+    void recover_primvars_NR2D(Cell<data_t> current_cell,
+                               Tensor<1, data_t> &x_vec,
+                               const data_t &S2);
+
+    template <class data_t>
+    void recover_primvars_NR3D(Cell<data_t> current_cell,
+                               Tensor<1, data_t> &x_vec,
+                               const data_t &S2);
+
 };
 
 

@@ -129,6 +129,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
 }
 
 
+
 template <class eos_t>
 template <class data_t>
 void PerfectFluid<eos_t>::compute(
@@ -146,12 +147,8 @@ void PerfectFluid<eos_t>::compute(
     data_t u0 = 0.0; // 0-comp of 4-velocity (lower index)
     data_t S2 = 0.0;
 
-    Tensor<1, data_t> residual_vec;  // residuals functions to minimize
     Tensor<1, data_t> x_vec;         // primary components to optimize
-    Tensor<1, data_t> x_vec_old;
-    Tensor<1, data_t> x_vec_orig;    //old
-    Tensor<1, data_t> dx_vec;        // step (Newton-Rhapson)
-    Tensor<2, data_t> jacobian;
+
     // Tensor<2, data_t> cofactors;
     data_t A = vars.E + vars.D + vars.pressure;  // A = E + D + Pressure = density * enthalpy * W^2
     data_t V2 = 0.0;
@@ -204,9 +201,7 @@ void PerfectFluid<eos_t>::compute(
     x_vec[1] = V2;
     x_vec[2] = 0;
 
-    x_vec_orig[0] = A;
-    x_vec_orig[1] = V2;
-    x_vec_orig[2] = 0;
+
 
 
     // DEBUG
@@ -221,7 +216,7 @@ void PerfectFluid<eos_t>::compute(
                       " " << vars.W  <<'\n';
     }
 
-
+//    recover_primvars_NR2D(current_cell, &x_vec, &S2);   // Problem when calling my_eos.compute_eos()
 
     // start Newton Rhapson manuver
     bool keep_iteration = true;
@@ -232,6 +227,12 @@ void PerfectFluid<eos_t>::compute(
     int iter_extra_max = 4;
     int iter_max = 1e6;
 
+    Tensor<1, data_t> residual_vec;  // residuals functions to minimize
+    Tensor<1, data_t> x_vec_old;
+    Tensor<1, data_t> x_vec_orig;    //old
+    Tensor<1, data_t> dx_vec;        // step (Newton-Rhapson)
+    Tensor<2, data_t> jacobian;
+
     data_t Lorentz = sqrt(1 - x_vec[1]);
     data_t det = 0.0;
     data_t dpdv2;
@@ -239,6 +240,10 @@ void PerfectFluid<eos_t>::compute(
 
     up_vars.pressure = vars.pressure;
     up_vars.energy = vars.energy;
+
+    x_vec_orig[0] = A;
+    x_vec_orig[1] = V2;
+    x_vec_orig[2] = 0;
 
 // print
     // std::cout << "00 : resids " <<  residual_vec[0] << residual_vec[1]  <<  residual_vec[2]  <<'\n';
@@ -405,6 +410,331 @@ void PerfectFluid<eos_t>::compute(
 
 
 
+
+
+
+template <class eos_t>
+template <class data_t>
+void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
+                                                Tensor<1, data_t> &x_vec,
+                                                const data_t &S2)
+{
+
+    const auto vars = current_cell.template load_vars<Vars>();
+    auto up_vars = current_cell.template load_vars<Vars>();
+
+    Tensor<1, data_t> residual_vec;  // residuals functions to minimize
+    Tensor<1, data_t> x_vec_old;
+    Tensor<1, data_t> x_vec_orig;    //old
+    Tensor<1, data_t> dx_vec;        // step (Newton-Rhapson)
+    Tensor<2, data_t> jacobian;
+
+    data_t omega = 0;
+
+    data_t A = x_vec[0] ;
+    data_t V2 = x_vec[1] ;
+    data_t kin = x_vec[2];
+
+
+    data_t pressure, enthalpy, dpdrho, dpdenergy ;
+    pressure = enthalpy = dpdrho = dpdenergy = 0.0;
+
+    // start Newton Rhapson manuver
+    bool keep_iteration = true;
+    data_t error_x = 0.0;
+    data_t precision = 1e-10;
+    data_t precision_2 = 1e-16;
+    data_t V2_max = 1 - 1e-15;
+    int iter, iter_extra;
+    int iter_extra_max = 4;
+    int iter_max = 1e6;
+
+    data_t Lorentz = sqrt(1 - x_vec[1]);
+    data_t det = 0.0;
+    iter = iter_extra = 0.0;
+    data_t dpdv2;
+
+    up_vars.pressure = vars.pressure;
+    up_vars.energy = vars.energy;
+
+    x_vec_orig[0] = x_vec[0];
+    x_vec_orig[1] = x_vec[1];
+    x_vec_orig[2] = x_vec[2];
+
+    // print check
+    // std::cout << "00 : resids " <<  residual_vec[0] << residual_vec[1]  <<  residual_vec[2]  <<'\n';
+
+    // iteration starts
+    while(keep_iteration){
+
+        iter +=1;
+
+        x_vec[0] = fabs(x_vec[0]);
+        x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
+        x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
+        x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
+        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];
+
+
+        Lorentz = sqrt(1 - x_vec[1]);
+        up_vars.W = 1.0/Lorentz;
+        up_vars.density = vars.D / up_vars.W;
+
+        up_vars.energy = 0;
+        my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+        omega = dpdenergy/up_vars.density;
+
+        A = x_vec[0];
+        V2 = x_vec[1];
+        pressure = omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
+        up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;      // CJ:: Why  P and energy is defined from old A and V2 values???  (fixed)
+
+
+
+        // up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
+        //                  + pressure * (1 - up_vars.W * up_vars.W))
+        //                  / vars.D / up_vars.W;
+        // my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+
+
+        residual_vec[0] = S2 - x_vec[1] * x_vec[0] * x_vec[0];
+        residual_vec[1] =  (vars.E + vars.D) -  x_vec[0] + pressure;
+
+
+        // print check
+        // if( iter > 10){
+        // std::cout << iter << " : resids " << "  " <<  residual_vec[0] << "  " << residual_vec[1]  << "  " <<  residual_vec[2]  <<'\n';
+        // }
+
+        // Calculating Jacobian of residuals in respect of x_vec. (ie J_ij = dres[i]/dx[j])
+        jacobian[0][0] = -2*x_vec[1]*x_vec[0];
+        jacobian[0][1] = - x_vec[0]*x_vec[0];
+        jacobian[1][0] = -1 +  omega / (omega+1) * (1 - x_vec[1]);
+        jacobian[1][1] = omega / (omega+1) *( vars.D /2/Lorentz  - x_vec[0]);
+
+        det =  jacobian[0][0]*jacobian[1][1] - jacobian[1][0] * jacobian[0][1];
+
+        dx_vec[0] = - (residual_vec[0]*jacobian[1][1] - residual_vec[1]*jacobian[0][1])/det;
+        dx_vec[1] =  (residual_vec[0]*jacobian[1][0] - residual_vec[1]*jacobian[0][0])/det;
+
+
+
+        FOR1(i){
+            x_vec_old[i] = x_vec[i];
+            x_vec[i] = x_vec[i] + dx_vec[i];
+        }
+
+        x_vec[0] = fabs(x_vec[0]);
+        x_vec[0] = (x_vec[0] ==  x_vec[0]) ?  x_vec[0] : x_vec_old[0];
+        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];  // Assuming planckian units!!
+        x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
+        x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
+        x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
+
+        error_x = (x_vec[0] == 0.) ? fabs(dx_vec[0]) : fabs(dx_vec[0]/x_vec[0]);
+
+
+        // if (iter < 4) {
+        //     std::cout << "error_x  " <<  error_x  << "  step" <<  iter <<'\n';
+        //     std::cout << "x  " <<  x_vec[0] << x_vec[1]  <<  x_vec[2]  <<'\n';
+        // }
+
+
+        if( (fabs(error_x) <= precision)  || residual_vec[0] <= precision_2){
+            iter_extra += 1;
+            keep_iteration = false;
+        }
+        else {
+            iter_extra = 0;
+        }
+
+        if( (iter_extra >= iter_extra_max) ) {
+            keep_iteration = false;
+        }
+        else if( iter >= iter_max) {
+            keep_iteration = false;
+
+            // const auto vars = current_cell.template load_vars<Vars>();
+            const auto geo_vars = current_cell.template load_vars<GeoVars>();
+
+            // DEBUG
+            // -------------------------
+            std::cout << "error_x  " <<  error_x  << "  ->  Newton-Rhapson did not converge !!!" << '\n';
+            std::cout << "FN dx[0]  " <<  dx_vec[0]  << "  step  "    <<  1.*iter <<'\n';
+            std::cout << "FN x  " <<  "  " << x_vec[0] <<  "  " << x_vec[1]  << "  " <<  x_vec[2]  <<'\n';
+            std::cout << "Orig x  " <<  "  " << x_vec_orig[0] <<  "  " << x_vec_orig[1]  << "  " <<  x_vec_orig[2]  <<'\n';
+
+            std::cout << " S2  " <<  "  " << S2 << "   chi  " << geo_vars.chi <<  "\n";
+
+            std::cout << " diff pressure  " <<  x_vec[0] - vars.D - vars.E <<   "   press: " <<  pressure
+                      << " diff " <<  x_vec[0] - vars.D - vars.E  - pressure <<   "\n" << "\n";
+
+        }
+
+    } // end  keep_iteration
+
+}
+
+
+
+template <class eos_t>
+template <class data_t>
+void PerfectFluid<eos_t>::recover_primvars_NR3D(Cell<data_t> current_cell,
+                                                Tensor<1, data_t> &x_vec,
+                                                const data_t &S2)
+{
+//    const auto vars = current_cell.template load_vars<Vars>();
+//    auto up_vars = current_cell.template load_vars<Vars>();
+//
+//    Tensor<1, data_t> residual_vec;  // residuals functions to minimize
+//    Tensor<1, data_t> x_vec_old;
+//    Tensor<1, data_t> x_vec_orig;    //old
+//    Tensor<1, data_t> dx_vec;        // step (Newton-Rhapson)
+//    Tensor<2, data_t> jacobian;
+//
+//    data_t omega = 0;
+//
+//    data_t A = x_vec[0] ;
+//    data_t V2 = x_vec[1] ;
+//    data_t kin = x_vec[2];
+//
+//
+//    data_t pressure, enthalpy, dpdrho, dpdenergy ;
+//    pressure = enthalpy = dpdrho = dpdenergy = 0.0;
+//
+//    // start Newton Rhapson manuver
+//    bool keep_iteration = true;
+//    data_t error_x = 0.0;
+//    data_t precision = 1e-10;
+//    data_t precision_2 = 1e-16;
+//    data_t V2_max = 1 - 1e-15;
+//    int iter, iter_extra;
+//    int iter_extra_max = 4;
+//    int iter_max = 1e6;
+//
+//    data_t Lorentz = sqrt(1 - x_vec[1]);
+//    data_t det = 0.0;
+//    iter = iter_extra = 0.0;
+//    data_t dpdv2;
+//
+//    up_vars.pressure = vars.pressure;
+//    up_vars.energy = vars.energy;
+//
+//    x_vec_orig[0] = x_vec[0];
+//    x_vec_orig[1] = x_vec[1];
+//    x_vec_orig[2] = x_vec[2];
+//
+//    // print check
+//    // std::cout << "00 : resids " <<  residual_vec[0] << residual_vec[1]  <<  residual_vec[2]  <<'\n';
+//
+//    // iteration starts
+//    while(keep_iteration){
+//
+//        iter +=1;
+//
+//        x_vec[0] = fabs(x_vec[0]);
+//        x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
+//        x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
+//        x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
+//        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];
+//
+//
+//        // if (iter < 2) {
+//        //     // std::cout << "error_x  " <<  error_x  << "  step" <<  iter <<'\n';
+//        //     std::cout << "00: x  " <<  x_vec[0] << x_vec[1]  <<  x_vec[2]  <<'\n';
+//        // }
+//
+//
+//        Lorentz = sqrt(1 - x_vec[1]);
+//        up_vars.W = 1.0/Lorentz;
+//        up_vars.density = vars.D / up_vars.W;
+//
+//        up_vars.energy = 0;
+//        my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+//        omega = dpdenergy/up_vars.density;
+//        pressure = omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
+//        up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;
+//        // up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
+//        //                  + pressure * (1 - up_vars.W * up_vars.W))
+//        //                  / vars.D / up_vars.W;
+//        // my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+//
+//
+//        residual_vec[0] = S2 - x_vec[1] * x_vec[0] * x_vec[0];
+//        residual_vec[1] =  (vars.E + vars.D) -  x_vec[0] + pressure;
+//
+//
+//        // print
+//        // if( iter > 10){
+//        // std::cout << iter << " : resids " << "  " <<  residual_vec[0] << "  " << residual_vec[1]  << "  " <<  residual_vec[2]  <<'\n';
+//        // }
+//
+//        // Calculating Jacobian of residuals in respect of x_vec. (ie J_ij = dres[i]/dx[j])
+//        jacobian[0][0] = -2*x_vec[1]*x_vec[0];
+//        jacobian[0][1] = - x_vec[0]*x_vec[0];
+//        jacobian[1][0] = -1 +  omega / (omega+1) * (1 - x_vec[1]);
+//        jacobian[1][1] = omega / (omega+1) *( vars.D /2/Lorentz  - x_vec[0]);
+//
+//        det =  jacobian[0][0]*jacobian[1][1] - jacobian[1][0] * jacobian[0][1];
+//
+//        dx_vec[0] = - (residual_vec[0]*jacobian[1][1] - residual_vec[1]*jacobian[0][1])/det;
+//        dx_vec[1] =  (residual_vec[0]*jacobian[1][0] - residual_vec[1]*jacobian[0][0])/det;
+//
+//
+//
+//        FOR1(i){
+//            x_vec_old[i] = x_vec[i];
+//            x_vec[i] = x_vec[i] + dx_vec[i];
+//        }
+//
+//        x_vec[0] = fabs(x_vec[0]);
+//        x_vec[0] = (x_vec[0] ==  x_vec[0]) ?  x_vec[0] : x_vec_old[0];
+//        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];  // Assuming planckian units!!
+//        x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
+//        x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
+//        x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
+//
+//        error_x = (x_vec[0] == 0.) ? fabs(dx_vec[0]) : fabs(dx_vec[0]/x_vec[0]);
+//
+//
+//        // if (iter < 4) {
+//        //     std::cout << "error_x  " <<  error_x  << "  step" <<  iter <<'\n';
+//        //     std::cout << "x  " <<  x_vec[0] << x_vec[1]  <<  x_vec[2]  <<'\n';
+//        // }
+//
+//
+//        if( (fabs(error_x) <= precision)  || residual_vec[0] <= precision_2){
+//        iter_extra += 1;
+//        keep_iteration = false;
+//        }
+//        else {
+//        iter_extra = 0;
+//        }
+//
+//        if( (iter_extra >= iter_extra_max) ) {
+//        keep_iteration = false;
+//        }
+//        else if( iter >= iter_max) {
+//        keep_iteration = false;
+//        // DEBUG
+//        // -------------------------
+//        std::cout << "error_x  " <<  error_x  << "  ->  Newton-Rhapson did not converge !!!" << '\n';
+//        std::cout << "FN dx[0]  " <<  dx_vec[0]  << "  step  "    <<  1.*iter <<'\n';
+//        std::cout << "FN x  " <<  "  " << x_vec[0] <<  "  " << x_vec[1]  << "  " <<  x_vec[2]  <<'\n';
+//        std::cout << "Orig x  " <<  "  " << x_vec_orig[0] <<  "  " << x_vec_orig[1]  << "  " <<  x_vec_orig[2]  <<'\n';
+//
+//        std::cout << " S2  " <<  "  " << S2 << "   chi  " << geo_vars.chi <<  "\n";
+//
+//        std::cout << " diff pressure  " <<  x_vec[0] - vars.D - vars.E <<   "   press: " <<  pressure
+//        << " diff " <<  x_vec[0] - vars.D - vars.E  - pressure <<   "\n" << "\n";
+//        }
+//
+//    } // end  keep_iteration
+//
+//
+}
+
+
 #endif /* PERFECTFLUID_IMPL_HPP_ */
 
 
@@ -415,180 +745,3 @@ void PerfectFluid<eos_t>::compute(
 
 
 
-
-
-
-
-/*
-
-void PerfectFluid<eos_t>::compute(
-  Cell<data_t> current_cell) const
-{
-
-    const auto vars = current_cell.template load_vars<Vars>();
-    const auto geo_vars = current_cell.template load_vars<GeoVars>();
-    auto up_vars = current_cell.template load_vars<Vars>();
-    auto nw_vars = current_cell.template load_vars<Vars>();
-
-    Tensor<1, data_t> V_i; // with lower indices: V_i
-    data_t V2 = 0.0;
-    Tensor<1, data_t> u_i; // 4-velocity with lower indices: u_i
-    data_t u0 = 0.0; // 0-comp of 4-velocity (lower index)
-
-
-    // Inverse metric
-    const auto h_UU = TensorAlgebra::compute_inverse_sym(geo_vars.h);
-
-    data_t enthalpy = 0.0;
-    data_t pressure = vars.pressure;   // guess
-    data_t residual = 1e6;
-    data_t threshold_residual = 1e-2;                                                 // TODO: aribtrary value?
-    data_t pressure_guess;
-    data_t criterion;
-    bool condition = true;
-
-    int cont = 0;
-    int flag = 0;
-    double delta = 0.01;
-    Tensor<1, data_t> V_i_nw; // with lower indices: V_i
-    data_t W_nw, density_nw, energy_nw, residual_nw;
-    data_t pressure_guess_nw = 0.0;
-
-    // double fact = 1;
-
-    // Iterative minimization of the residual to calculate the Presseure
-    //  (See Alcubierre p. 245)
-    while (condition) {
-
-        pressure_guess = pressure;
-
-        // Evaluate for guess pressure
-        V2 = 10;
-        while (V2 >=1) {
-
-          FOR1(i)
-          {
-            V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure_guess);
-          }
-
-          V2 = 0;
-          FOR2(i,j)
-          {
-            V2 +=  V_i[i] * h_UU[i][j] * V_i[j];
-          }
-          pressure_guess = pressure_guess - pressure_guess * threshold_residual;
-          flag += 1;
-        }
-
-        if (flag>1){
-          std::cout << "it = " << cont << ",  -> V2 bigger than 1 !!!" << '\n';
-          flag = 0;
-        }
-
-
-        up_vars.W = 1.0 / sqrt(1.0 - V2);
-        up_vars.density = vars.D / up_vars.W;
-        up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
-                         + pressure_guess * (1 - up_vars.W * up_vars.W))
-                         / vars.D / up_vars.W;
-
-
-         // Same for guess pressure 2
-        pressure_guess_nw  = pressure_guess + delta * pressure_guess;
-         V2 = 10;
-         while (V2 >=1) {
-
-           FOR1(i)
-           {
-             V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure_guess_nw);
-           }
-
-           V2 = 0;
-           FOR2(i,j)
-           {
-             V2 +=  V_i[i] * h_UU[i][j] * V_i[j];
-           }
-           pressure_guess_nw = pressure_guess_nw + pressure_guess_nw * threshold_residual;
-
-           // flag += 1;
-         }
-
-         // if (flag>1){
-         //   std::cout << "!! it = " << cont << ",  -> V2 bigger than 1 !!!" << '\n';
-         //   flag = 0;
-         // }
-
-         nw_vars.W = 1.0 / sqrt(1.0 - V2);
-         nw_vars.density = vars.D / nw_vars.W;
-         nw_vars.energy = (vars.E + vars.D * ( 1 - nw_vars.W)
-                          + pressure_guess_nw * (1 - nw_vars.W * nw_vars.W))
-                          / vars.D / nw_vars.W;
-
-
-
-        // fact = 1;
-        my_eos.compute_eos(pressure, enthalpy, up_vars);
-        residual =  (pressure - pressure_guess);
-        my_eos.compute_eos(pressure, enthalpy, nw_vars);
-        residual_nw =  (pressure - pressure_guess_nw);
-
-        if (residual > threshold_residual) {
-
-          pressure = pressure_guess -
-                     residual * (pressure_guess_nw -
-                             pressure_guess) / ( residual_nw - residual );
-        }
-
-        criterion = simd_compare_gt(
-                abs(residual), threshold_residual );
-        condition = criterion;
-
-
-        cont += 1;
-
-
-        //
-        // if (V2 >= 1) {
-        //
-        //   std::cout << "it = " << cont << ",  -> V2 bigger than 1 !!!" << '\n';
-        //   //std::cout << " p = " << pressure_guess << '\n';
-        //   //std::cout << " D+E = " << vars.E + vars.D << '\n';
-        //   // fact *= 10;
-        //   pressure = fabs(pressure_guess) * 10.;
-        //   std::cout << " p (new) = " << pressure << '\n';
-        //
-        // }
-
-
-
-
-    }
-
-    up_vars.pressure = pressure;
-    up_vars.enthalpy = enthalpy;
-
-
-    FOR1(i)
-    {
-      V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure);
-    }
-
-
-    FOR1(i) { u_i[i] = V_i[i] * up_vars.W; }
-    u0 = up_vars.W / geo_vars.lapse;
-
-    FOR1(i) { up_vars.V[i] = u_i[i] / geo_vars.lapse / u0
-                              + geo_vars.shift[i] / geo_vars.lapse;  }
-
-
-    // Overwrite new values for fluid variables
-    current_cell.store_vars(up_vars.density, c_density);
-    current_cell.store_vars(up_vars.energy, c_energy);
-    current_cell.store_vars(up_vars.pressure, c_pressure);
-    current_cell.store_vars(up_vars.enthalpy, c_enthalpy);
-    current_cell.store_vars(up_vars.V, GRInterval<c_V1, c_V3>());
-    current_cell.store_vars(up_vars.W, c_W);
-}
-
-
-*/
