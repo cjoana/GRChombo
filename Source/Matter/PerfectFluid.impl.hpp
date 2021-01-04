@@ -366,30 +366,29 @@ void PerfectFluid<eos_t>::compute(
     my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
     up_vars.pressure = pressure;
     up_vars.enthalpy = enthalpy;
-    // up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
-    //                  + pressure * (1 - up_vars.W * up_vars.W))
-    //                  / vars.D / up_vars.W;
 
-    // my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
-    // up_vars.pressure = pressure;
-    // up_vars.enthalpy = enthalpy;
-    // up_vars.W = 1.0/ sqrt(1.0 - V2);
+    /*  
+    up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
+                     + pressure * (1 - up_vars.W * up_vars.W))
+                     / vars.D / up_vars.W;
 
-
-
+    my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+    up_vars.pressure = pressure;
+    up_vars.enthalpy = enthalpy;
+    up_vars.W = 1.0/ sqrt(1.0 - V2);
 
 
     // FOR1(i)
-    // {
-    //   V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure);
-    // }
-    //
-    // FOR1(i) { u_i[i] = V_i[i] * up_vars.W; }
-    // u0 = up_vars.W / geo_vars.lapse;
-    //
-    // FOR1(i) { up_vars.V[i] = u_i[i] / geo_vars.lapse / u0
-    //                           + geo_vars.shift[i] / geo_vars.lapse;  }
+    {
+      V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure);
+    }
 
+    FOR1(i) { u_i[i] = V_i[i] * up_vars.W; }
+    u0 = up_vars.W / geo_vars.lapse;
+
+    FOR1(i) { up_vars.V[i] = u_i[i] / geo_vars.lapse / u0
+                              + geo_vars.shift[i] / geo_vars.lapse;  }
+    */
 
     FOR1(i) {
        up_vars.V[i] = 0;
@@ -736,12 +735,3 @@ void PerfectFluid<eos_t>::recover_primvars_NR3D(Cell<data_t> current_cell,
 
 
 #endif /* PERFECTFLUID_IMPL_HPP_ */
-
-
-
-
-
-
-
-
-
