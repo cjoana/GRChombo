@@ -16,9 +16,13 @@ MatterConstraints<matter_t>::MatterConstraints(
     const matter_t a_matter, double dx, double G_Newton, int a_c_Ham,
     const Interval &a_c_Moms, int a_c_Ham_abs_terms /* defaulted*/,
     const Interval &a_c_Moms_abs_terms /*defaulted*/,
-    int a_c_ricci_scalar,  int a_c_trA2 /*  CJ  new cunstructor */)
+    int a_c_ricci_scalar,  int a_c_trA2 /*  CJ  new constr */,
+    int a_c_rho,  int a_c_S /*  CJ  new constr */,
+    int a_c_ricci_scalar_tilde /*  CJ  new constr */    
+  )
     : Constraints(dx, a_c_Ham, a_c_Moms, a_c_Ham_abs_terms, a_c_Moms_abs_terms,
-                  a_c_ricci_scalar, a_c_trA2, /*CJ  new cunstructor*/
+                  a_c_ricci_scalar, a_c_trA2, /*CJ  new constr*/
+                  a_c_rho, a_c_S, a_c_ricci_scalar_tilde, /*CJ  new constr*/
                   0.0 /*No cosmological constant*/),
       my_matter(a_matter), m_G_Newton(G_Newton)
 {
@@ -60,6 +64,12 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
                 8.0 * M_PI * m_G_Newton * abs(emtensor.Si[i]);
         }
     }
+
+    // output rho and S (CJ addition !!!)
+    out.rho = emtensor.rho;
+    out.S = emtensor.S;
+
+
     // Write the constraints into the output FArrayBox
     store_vars(out, current_cell);
 }

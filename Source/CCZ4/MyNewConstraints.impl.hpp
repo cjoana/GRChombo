@@ -19,11 +19,15 @@ inline Constraints::Constraints(
     int a_c_Ham_abs_terms /*defaulted*/,
     const Interval &a_c_Moms_abs_terms /*defaulted*/,
     int a_c_ricci_scalar,  int a_c_trA2 /*  CJ  new cunstructor */,
+    int a_c_rho,  int a_c_S /*  CJ  new cunstructor */,
+    int a_c_ricci_scalar_tilde /*  CJ  new cunstructor */,
     double cosmological_constant /*defaulted*/)
     : m_deriv(dx), m_c_Ham(a_c_Ham), m_c_Moms(a_c_Moms),
       m_c_Ham_abs_terms(a_c_Ham_abs_terms),
       m_c_Moms_abs_terms(a_c_Moms_abs_terms),
       m_c_ricci_scalar(a_c_ricci_scalar), m_c_trA2(a_c_trA2),
+      m_c_rho(a_c_rho), m_c_S(a_c_S),
+      m_c_ricci_scalar_tilde(a_c_ricci_scalar_tilde),
       m_cosmological_constant(cosmological_constant)
 {
 }
@@ -73,7 +77,7 @@ Constraints::Vars<data_t> Constraints::constraint_equations(
 
         // CJ extension
         out.ricci_scalar = ricci.scalar;
-        // out.ricci_scalar_tilde = ricci.scalar_tilde;
+        out.ricci_scalar_tilde = ricci.scalar_tilde;
         out.trA2 = tr_A2;
 
     }
@@ -127,10 +131,28 @@ void Constraints::store_vars(Vars<data_t> &out,
     // return HamRel instead (CJ extension)
        data_t HamRel = out.Ham/out.Ham_abs_terms;
        current_cell.store_vars(HamRel, m_c_Ham_abs_terms);
+    }
 
     // trA2 and ricci_t  (CJ extension)
+    if (m_c_trA2 >= 0)
+    {
        current_cell.store_vars(out.trA2, m_c_trA2);
+    }
+    if (m_c_ricci_scalar >= 0)
+    {
        current_cell.store_vars(out.ricci_scalar, m_c_ricci_scalar);
+    }
+    if (m_c_rho >= 0)
+    {
+       current_cell.store_vars(out.rho, m_c_rho);
+    }
+    if (m_c_S >= 0)
+    {
+       current_cell.store_vars(out.S, m_c_S);
+    }
+    if (m_c_ricci_scalar_tilde >= 0)
+    {
+       current_cell.store_vars(out.ricci_scalar_tilde, m_c_ricci_scalar_tilde);
     }
 
     // Mom

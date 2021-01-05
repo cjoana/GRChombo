@@ -38,7 +38,8 @@ class Constraints
         Tensor<1, data_t> Mom_abs_terms;
         data_t trA2;
         data_t ricci_scalar;  // CJ !!!!
-        // data_t rho, S;  // Not here CJ !!!!
+        data_t rho, S;  // Not here CJ !!!!
+        data_t ricci_scalar_tilde;  // Not here CJ !!!!
 
     };
 
@@ -62,6 +63,8 @@ class Constraints
                             const Interval &a_c_Moms_abs_terms = Interval(),
                             int a_c_ricci_scalar = -1,  // CJ
                             int a_c_trA2 = -1,          // CJ
+                            int a_c_rho=-1,  int a_c_S=-1 /*  CJ  new contr */,
+                            int a_c_ricci_scalar_tilde=-1 /*  CJ  new constr */,
                             double cosmological_constant = 0.0);
 
     template <class data_t> void compute(Cell<data_t> current_cell) const;
@@ -74,6 +77,9 @@ class Constraints
     const Interval m_c_Moms_abs_terms;
     const int m_c_ricci_scalar = -1;     // CJ
     const int m_c_trA2 = -1;             // CJ
+    const int m_c_rho = -1;              // CJ
+    const int m_c_S = -1;                // CJ
+    const int m_c_ricci_scalar_tilde = -1;             // CJ
     double m_cosmological_constant;
 
     template <class data_t, template <typename> class vars_t,

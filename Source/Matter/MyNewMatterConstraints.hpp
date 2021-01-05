@@ -55,7 +55,11 @@ template <class matter_t> class MatterConstraints : public Constraints
                       int a_c_Ham_abs_terms = -1,
                       const Interval &a_c_Moms_abs_terms = Interval(),
                       int a_c_ricci_scalar = -1,
-                      int a_c_trA2 = -1 /* CJ  new conts. */);
+                      int a_c_trA2 = -1 /* CJ  new conts. */,
+                      int a_c_rho = -1,
+                      int a_c_S = -1 /* CJ  new conts. */,
+                      int a_c_ricci_scalar_tilde = -1
+                    );
 
     //! The compute member which calculates the constraints at each point in the
     //! box
