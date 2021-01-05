@@ -41,7 +41,7 @@ class KTaggingCriterion
             mod_d1_K += d1_K[idir] * d1_K[idir];
         }
 
-        data_t criterion = m_dx * sqrt(mod_d1_K) / m_threshold_K);
+        data_t criterion = m_dx * sqrt(mod_d1_K) / m_threshold_K;
 
         // Write back into the flattened Chombo box
         current_cell.store_vars(criterion, 0);
