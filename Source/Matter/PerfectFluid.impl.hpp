@@ -174,9 +174,9 @@ void PerfectFluid<eos_t>::compute(
       std::cout << "    wrong stared S2 ::  " <<  S2  << '\n';
 
       std::cout << "    metric  " <<'\n';
-      std::cout << "    00 " <<  h_UU[0][0] << " " << h_UU[0][1]  << " " << h_UU[0][2]<<'\n';
-      std::cout << "    00 " <<  h_UU[1][0] << " " << h_UU[1][1]  << " " << h_UU[1][2]<<'\n';
-      std::cout << "    00 " <<  h_UU[2][0] << " " << h_UU[2][1]  << " " << h_UU[2][2]<<'\n';
+      std::cout << "    1i " <<  var.h[0][0] << " " << var.h[0][1]  << " " << var.h[0][2]<<'\n';
+      std::cout << "    2i " <<  var.h[1][0] << " " << var.h[1][1]  << " " << var.h[1][2]<<'\n';
+      std::cout << "    3i " <<  var.h[2][0] << " " << var.h[2][1]  << " " << var.h[2][2]<<'\n';
 
 
     }
@@ -367,7 +367,7 @@ void PerfectFluid<eos_t>::compute(
     up_vars.pressure = pressure;
     up_vars.enthalpy = enthalpy;
 
-    /*  
+    /*
     up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
                      + pressure * (1 - up_vars.W * up_vars.W))
                      / vars.D / up_vars.W;
