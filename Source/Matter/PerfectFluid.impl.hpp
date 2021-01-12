@@ -174,9 +174,9 @@ void PerfectFluid<eos_t>::compute(
       std::cout << "    wrong stared S2 ::  " <<  S2  << '\n';
 
       std::cout << "    metric  " <<'\n';
-      std::cout << "    1i " <<  vars.h[0][0] << " " << vars.h[0][1]  << " " << vars.h[0][2]<<'\n';
-      std::cout << "    2i " <<  vars.h[1][0] << " " << vars.h[1][1]  << " " << vars.h[1][2]<<'\n';
-      std::cout << "    3i " <<  vars.h[2][0] << " " << vars.h[2][1]  << " " << vars.h[2][2]<<'\n';
+      std::cout << "    1i " <<  geo_vars.h[0][0] << " " << geo_vars.h[0][1]  << " " << geo_vars.h[0][2]<<'\n';
+      std::cout << "    2i " <<  geo_vars.h[1][0] << " " << geo_vars.h[1][1]  << " " << geo_vars.h[1][2]<<'\n';
+      std::cout << "    3i " <<  geo_vars.h[2][0] << " " << geo_vars.h[2][1]  << " " << geo_vars.h[2][2]<<'\n';
 
 
     }
