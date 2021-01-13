@@ -172,6 +172,7 @@ void PerfectFluid<eos_t>::compute(
 
     if (S2<0){
       std::cout << "    wrong stared S2 ::  " <<  S2  << '\n';
+      std::cout << "    lapse  " << geo_vars.lapse   <<'\n';
 
       std::cout << "    metric  " <<'\n';
       std::cout << "    1i " <<  geo_vars.h[0][0] << " " << geo_vars.h[0][1]  << " " << geo_vars.h[0][2]<<'\n';
@@ -216,7 +217,8 @@ void PerfectFluid<eos_t>::compute(
                       " " << vars.W  <<'\n';
     }
 
-//    recover_primvars_NR2D(current_cell, &x_vec, &S2);   // Problem when calling my_eos.compute_eos()
+
+    /*
 
     // start Newton Rhapson manuver
     bool keep_iteration = true;
@@ -353,11 +355,17 @@ void PerfectFluid<eos_t>::compute(
       }
 
     } // end  keep_iteration
+    */
+
+
+    recover_primvars_NR2D(current_cell, x_vec, S2);
 
 
     A = x_vec[0];
     V2 = x_vec[1];
 
+
+    data_t Lorentz;
     // Redefine variables
     Lorentz = sqrt(1 - V2);
     up_vars.density = vars.D / Lorentz;
@@ -416,7 +424,7 @@ template <class eos_t>
 template <class data_t>
 void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
                                                 Tensor<1, data_t> &x_vec,
-                                                const data_t &S2)
+                                                const data_t &S2) const
 {
 
     const auto vars = current_cell.template load_vars<Vars>();
@@ -459,6 +467,9 @@ void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
     x_vec_orig[0] = x_vec[0];
     x_vec_orig[1] = x_vec[1];
     x_vec_orig[2] = x_vec[2];
+    x_vec_old[0] = x_vec[0];
+    x_vec_old[1] = x_vec[1];
+    x_vec_old[2] = x_vec[2];
 
     // print check
     // std::cout << "00 : resids " <<  residual_vec[0] << residual_vec[1]  <<  residual_vec[2]  <<'\n';
@@ -469,10 +480,11 @@ void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
         iter +=1;
 
         x_vec[0] = fabs(x_vec[0]);
+        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];
         x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
         x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
+        x_vec[0] = (x_vec[0] ==  x_vec[0]) ?  x_vec[0] : x_vec_old[0];
         x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
-        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];
 
 
         Lorentz = sqrt(1 - x_vec[1]);
@@ -482,14 +494,8 @@ void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
         up_vars.energy = 0;
         my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
         omega = dpdenergy/up_vars.density;
-
-        A = x_vec[0];
-        V2 = x_vec[1];
         pressure = omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
-        up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;      // CJ:: Why  P and energy is defined from old A and V2 values???  (fixed)
-
-
-
+        up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;
         // up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
         //                  + pressure * (1 - up_vars.W * up_vars.W))
         //                  / vars.D / up_vars.W;
@@ -517,18 +523,11 @@ void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
         dx_vec[1] =  (residual_vec[0]*jacobian[1][0] - residual_vec[1]*jacobian[0][0])/det;
 
 
-
+        // Advance in x_vec
         FOR1(i){
             x_vec_old[i] = x_vec[i];
             x_vec[i] = x_vec[i] + dx_vec[i];
         }
-
-        x_vec[0] = fabs(x_vec[0]);
-        x_vec[0] = (x_vec[0] ==  x_vec[0]) ?  x_vec[0] : x_vec_old[0];
-        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];  // Assuming planckian units!!
-        x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
-        x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
-        x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
 
         error_x = (x_vec[0] == 0.) ? fabs(dx_vec[0]) : fabs(dx_vec[0]/x_vec[0]);
 
@@ -580,7 +579,7 @@ template <class eos_t>
 template <class data_t>
 void PerfectFluid<eos_t>::recover_primvars_NR3D(Cell<data_t> current_cell,
                                                 Tensor<1, data_t> &x_vec,
-                                                const data_t &S2)
+                                                const data_t &S2) const
 {
 //    const auto vars = current_cell.template load_vars<Vars>();
 //    auto up_vars = current_cell.template load_vars<Vars>();

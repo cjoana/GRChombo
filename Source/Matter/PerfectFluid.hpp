@@ -176,12 +176,12 @@ template <class eos_t = DefaultEOS> class PerfectFluid
     template <class data_t>
     void recover_primvars_NR2D(Cell<data_t> current_cell,
                                Tensor<1, data_t> &x_vec,
-                               const data_t &S2);
+                               const data_t &S2) const;
 
     template <class data_t>
     void recover_primvars_NR3D(Cell<data_t> current_cell,
                                Tensor<1, data_t> &x_vec,
-                               const data_t &S2);
+                               const data_t &S2) const;
 
 };
 
