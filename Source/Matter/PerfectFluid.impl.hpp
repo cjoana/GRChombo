@@ -529,6 +529,14 @@ void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
             x_vec[i] = x_vec[i] + dx_vec[i];
         }
 
+
+        x_vec[0] = fabs(x_vec[0]);
+        x_vec[0] = (x_vec[0] ==  x_vec[0]) ?  x_vec[0] : x_vec_old[0];
+        x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];
+        x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
+        x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
+        x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
+
         error_x = (x_vec[0] == 0.) ? fabs(dx_vec[0]) : fabs(dx_vec[0]/x_vec[0]);
 
 
