@@ -160,6 +160,8 @@ void PerfectFluid<eos_t>::compute(
 
     data_t pressure, enthalpy, dpdrho, dpdenergy ;
     pressure = enthalpy = dpdrho = dpdenergy = 0.0;
+    my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, vars);
+    omega = dpdenergy/vars.density;
 
 
     // Calculate V^2
@@ -178,10 +180,7 @@ void PerfectFluid<eos_t>::compute(
       std::cout << "    1i " <<  geo_vars.h[0][0] << " " << geo_vars.h[0][1]  << " " << geo_vars.h[0][2]<<'\n';
       std::cout << "    2i " <<  geo_vars.h[1][0] << " " << geo_vars.h[1][1]  << " " << geo_vars.h[1][2]<<'\n';
       std::cout << "    3i " <<  geo_vars.h[2][0] << " " << geo_vars.h[2][1]  << " " << geo_vars.h[2][2]<<'\n';
-
-
     }
-
 
 
     S2 = (S2 < 0) ? 0.0 : S2;
@@ -194,17 +193,11 @@ void PerfectFluid<eos_t>::compute(
     V2 = ( V2 == V2) ?  V2: V2_max;
     V2 = ( S2 == 0. ) ?  0.0 : V2;
 
-    // up_vars.density = vars.D * sqrt(1 -  V2);
-    // kin = up_vars.density * vars.energy;
-    // kin = vars.density * vars.energy;
 
+    // set initial values
     x_vec[0] = A;
     x_vec[1] = V2;
     x_vec[2] = 0;
-
-
-
-
 
     // DEBUG
     // -----------------
@@ -219,184 +212,13 @@ void PerfectFluid<eos_t>::compute(
     }
 
 
-
-
-
-    // std::cout << "x_vec ini  " <<  x_vec[0]  << " " << x_vec[1] << '\n';  //DEBUG delete
-
     recover_primvars_NR2D(current_cell, x_vec, S2);
-
-    // Delete
-    Tensor<1, data_t> x_vecf1;
-    FOR1(i) { x_vecf1[i] = x_vec[i];}
-
-    // Delete
-    x_vec[0] = A;
-    x_vec[1] = V2;
-    x_vec[2] = 0;
-
-
-
-//###############################################################################
-
-    // start Newton Rhapson manuver
-    bool keep_iteration = true;
-    data_t error_x = 0.0;
-    data_t precision = 1e-10;
-    data_t precision_2 = 1e-16;
-    int iter, iter_extra;
-    int iter_extra_max = 4;
-    int iter_max = 1e6;
-
-    Tensor<1, data_t> residual_vec;  // residuals functions to minimize
-    Tensor<1, data_t> x_vec_old;
-    Tensor<1, data_t> x_vec_orig;    //old
-    Tensor<1, data_t> dx_vec;        // step (Newton-Rhapson)
-    Tensor<2, data_t> jacobian;
-
-    data_t Lorentz = sqrt(1 - x_vec[1]);
-    data_t det = 0.0;
-    data_t dpdv2;
-    iter = iter_extra = 0.0;
-
-    up_vars.pressure = vars.pressure;
-    up_vars.energy = vars.energy;
-
-    x_vec_orig[0] = A;
-    x_vec_orig[1] = V2;
-    x_vec_orig[2] = 0;
-
-// print
-    // std::cout << "00 : resids " <<  residual_vec[0] << residual_vec[1]  <<  residual_vec[2]  <<'\n';
-
-    // iteration starts
-    while(keep_iteration){
-
-      iter +=1;
-
-      x_vec[0] = fabs(x_vec[0]);
-      x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
-      x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
-      x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
-      x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];
-
-
-      // if (iter < 2) {
-      //     // std::cout << "error_x  " <<  error_x  << "  step" <<  iter <<'\n';
-      //     std::cout << "00: x  " <<  x_vec[0] << x_vec[1]  <<  x_vec[2]  <<'\n';
-      // }
-
-
-      Lorentz = sqrt(1 - x_vec[1]);
-      up_vars.W = 1.0/Lorentz;
-      up_vars.density = vars.D / up_vars.W;
-
-      up_vars.energy = 0;
-      my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
-      omega = dpdenergy/up_vars.density;
-      pressure = omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
-      up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;
-      // up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
-      //                  + pressure * (1 - up_vars.W * up_vars.W))
-      //                  / vars.D / up_vars.W;
-      // my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
-
-
-      residual_vec[0] = S2 - x_vec[1] * x_vec[0] * x_vec[0];
-      residual_vec[1] =  (vars.E + vars.D) -  x_vec[0] + pressure;
-
-
-// print
-      // if( iter > 10){
-        // std::cout << iter << " : resids " << "  " <<  residual_vec[0] << "  " << residual_vec[1]  << "  " <<  residual_vec[2]  <<'\n';
-      // }
-
-      // Calculating Jacobian of residuals in respect of x_vec. (ie J_ij = dres[i]/dx[j])
-      jacobian[0][0] = -2*x_vec[1]*x_vec[0];
-      jacobian[0][1] = - x_vec[0]*x_vec[0];
-      jacobian[1][0] = -1 +  omega / (omega+1) * (1 - x_vec[1]);
-      jacobian[1][1] = omega / (omega+1) *( vars.D /2/Lorentz  - x_vec[0]);
-
-      det =  jacobian[0][0]*jacobian[1][1] - jacobian[1][0] * jacobian[0][1];
-
-      dx_vec[0] = - (residual_vec[0]*jacobian[1][1] - residual_vec[1]*jacobian[0][1])/det;
-      dx_vec[1] =  (residual_vec[0]*jacobian[1][0] - residual_vec[1]*jacobian[0][0])/det;
-
-
-
-      FOR1(i){
-        x_vec_old[i] = x_vec[i];
-        x_vec[i] = x_vec[i] + dx_vec[i];
-      }
-
-      x_vec[0] = fabs(x_vec[0]);
-      x_vec[0] = (x_vec[0] ==  x_vec[0]) ?  x_vec[0] : x_vec_old[0];
-      x_vec[0] = (x_vec[0] > 1e20) ? x_vec_old[0] : x_vec[0];  // Assuming planckian units!!
-      x_vec[1] = (x_vec[1] < 0.) ? 0.0 : x_vec[1];
-      x_vec[1] = (x_vec[1] >= 1.) ? V2_max : x_vec[1];
-      x_vec[1] = (x_vec[1] ==  x_vec[1]) ?  x_vec[1] : x_vec_old[1];
-
-      error_x = (x_vec[0] == 0.) ? fabs(dx_vec[0]) : fabs(dx_vec[0]/x_vec[0]);
-
-
-      // if (iter < 4) {
-      //     std::cout << "error_x  " <<  error_x  << "  step" <<  iter <<'\n';
-      //     std::cout << "x  " <<  x_vec[0] << x_vec[1]  <<  x_vec[2]  <<'\n';
-      // }
-
-
-      if( (fabs(error_x) <= precision)  || residual_vec[0] <= precision_2){
-        iter_extra += 1;
-        keep_iteration = false;
-      }
-      else {
-        iter_extra = 0;
-      }
-
-      if( (iter_extra >= iter_extra_max) ) {
-        keep_iteration = false;
-      }
-      else if( iter >= iter_max) {
-        keep_iteration = false;
-
-        // DEBUG
-        // -------------------------
-        std::cout << "error_x  " <<  error_x  << "  ->  Newton-Rhapson did not converge !!!" << '\n';
-        std::cout << "FN dx[0]  " <<  dx_vec[0]  << "  step  "    <<  1.*iter <<'\n';
-        std::cout << "FN x  " <<  "  " << x_vec[0] <<  "  " << x_vec[1]  << "  " <<  x_vec[2]  <<'\n';
-        std::cout << "Orig x  " <<  "  " << x_vec_orig[0] <<  "  " << x_vec_orig[1]  << "  " <<  x_vec_orig[2]  <<'\n';
-
-        std::cout << " S2  " <<  "  " << S2 << "   chi  " << geo_vars.chi <<  "\n";
-
-        std::cout << " diff pressure  " <<  x_vec[0] - vars.D - vars.E <<   "   press: " <<  pressure
-                  << " diff " <<  x_vec[0] - vars.D - vars.E  - pressure <<   "\n" << "\n";
-
-      }
-
-    } // end  keep_iteration
-
-
-//###############################################################################
-
-
-
-    // Delete
-    Tensor<1, data_t> x_vecf2;
-    FOR1(i) { x_vecf2[i] = x_vec[i];}
-    if ( !( (x_vecf1[0] == x_vecf2[0]) || (x_vecf1[1] == x_vecf2[1])) ){
-        std::cout << "x_vec is different!! : " << "\n";
-        std::cout <<  A << " " <<  V2  << "\n";
-        std::cout <<  x_vecf1[0] << " " << x_vecf1[1]  << "\n";
-        std::cout <<  x_vecf2[0] << " " << x_vecf2[1]  << "\n";
-    }
-
 
     A = x_vec[0];
     V2 = x_vec[1];
 
-
-    //data_t Lorentz;
     // Redefine variables
+    data_t Lorentz;
     Lorentz = sqrt(1 - V2);
     up_vars.density = vars.D / Lorentz;
     pressure = omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
