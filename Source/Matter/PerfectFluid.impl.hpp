@@ -205,6 +205,7 @@ void PerfectFluid<eos_t>::compute(
 
 
 
+
     // DEBUG
     // -----------------
     if (!( (vars.density  == vars.density) || (vars.energy == vars.density)
@@ -218,7 +219,25 @@ void PerfectFluid<eos_t>::compute(
     }
 
 
-    /*
+
+
+
+    // std::cout << "x_vec ini  " <<  x_vec[0]  << " " << x_vec[1] << '\n';  //DEBUG delete
+
+    recover_primvars_NR2D(current_cell, x_vec, S2);
+
+    // Delete
+    Tensor<1, data_t> x_vecf1;
+    FOR1(i) { x_vecf1[i] = x_vec[i];}
+
+    // Delete
+    x_vec[0] = A;
+    x_vec[1] = V2;
+    x_vec[2] = 0;
+
+
+
+//###############################################################################
 
     // start Newton Rhapson manuver
     bool keep_iteration = true;
@@ -355,17 +374,28 @@ void PerfectFluid<eos_t>::compute(
       }
 
     } // end  keep_iteration
-    */
 
 
-    recover_primvars_NR2D(current_cell, x_vec, S2);
+//###############################################################################
+
+
+
+    // Delete
+    Tensor<1, data_t> x_vecf2;
+    FOR1(i) { x_vecf2[i] = x_vec[i];}
+    if ( !( (x_vecf1[0] == x_vecf2[0]) || (x_vecf1[1] == x_vecf2[1])) ){
+        std::cout << "x_vec is different!! : " << "\n";
+        std::cout <<  A << " " <<  V2  << "\n";
+        std::cout <<  x_vecf1[0] << " " << x_vecf1[1]  << "\n";
+        std::cout <<  x_vecf2[0] << " " << x_vecf2[1]  << "\n";
+    }
 
 
     A = x_vec[0];
     V2 = x_vec[1];
 
 
-    data_t Lorentz;
+    //data_t Lorentz;
     // Redefine variables
     Lorentz = sqrt(1 - V2);
     up_vars.density = vars.D / Lorentz;
@@ -426,6 +456,9 @@ void PerfectFluid<eos_t>::recover_primvars_NR2D(Cell<data_t> current_cell,
                                                 Tensor<1, data_t> &x_vec,
                                                 const data_t &S2) const
 {
+
+
+
 
     const auto vars = current_cell.template load_vars<Vars>();
     auto up_vars = current_cell.template load_vars<Vars>();
