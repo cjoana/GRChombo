@@ -177,9 +177,12 @@ void PerfectFluid<eos_t>::compute(
       std::cout << "    lapse  " << geo_vars.lapse   <<'\n';
 
       std::cout << "    metric  " <<'\n';
-      std::cout << "    1i " <<  geo_vars.h[0][0] << " " << geo_vars.h[0][1]  << " " << geo_vars.h[0][2]<<'\n';
-      std::cout << "    2i " <<  geo_vars.h[1][0] << " " << geo_vars.h[1][1]  << " " << geo_vars.h[1][2]<<'\n';
-      std::cout << "    3i " <<  geo_vars.h[2][0] << " " << geo_vars.h[2][1]  << " " << geo_vars.h[2][2]<<'\n';
+      std::cout << "    1i " <<  geo_vars.h[0][0] << " " << geo_vars.h[0][1]
+                             << " " << geo_vars.h[0][2]<<'\n';
+      std::cout << "    2i " <<  geo_vars.h[1][0] << " " << geo_vars.h[1][1]
+                << " " << geo_vars.h[1][2]<<'\n';
+      std::cout << "    3i " <<  geo_vars.h[2][0] << " " << geo_vars.h[2][1]
+                << " " << geo_vars.h[2][2]<<'\n';
     }
 
 
