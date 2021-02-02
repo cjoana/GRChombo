@@ -6,25 +6,24 @@
 #ifndef USERVARIABLES_HPP
 #define USERVARIABLES_HPP
 
-#include "CCZ4UserVariables.hpp"
+#include "EmptyDiagnosticVariables.hpp"
 #include <array>
 #include <string>
 
+// assign enum to each variable
 enum
 {
-    c_h = c_h11,
-    c_A = c_A11,
-    c_Gamma = c_Gamma1,
-    c_shift = c_shift1,
-    c_B = c_B1,
+    c_A,
+    c_B,
 
-    NUM_VARS = NUM_CCZ4_VARS
+    NUM_VARS
 };
 
 namespace UserVariables
 {
-static const std::array<std::string, NUM_VARS> variable_names =
-    ccz4_variable_names;
+static const std::array<std::string, NUM_VARS> variable_names = {"A", "B"};
 }
+
+#include "UserVariables.inc.hpp"
 
 #endif /* USERVARIABLES_HPP */
