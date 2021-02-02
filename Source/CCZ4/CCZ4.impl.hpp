@@ -220,14 +220,21 @@ void CCZ4::rhs_equation(vars_t<data_t> &rhs, const vars_t<data_t> &vars,
 
     rhs.lapse = m_params.lapse_advec_coeff * advec.lapse -
                 m_params.lapse_coeff * pow(vars.lapse, m_params.lapse_power) *
-                    (vars.K - 2 * vars.Theta);
+                (
+                  vars.K +
+                  //tr_A2   +
+                  pow(ricci.scalar*ricci.scalar, 0.5) // CJ added !!!
+                  - 2 * vars.Theta
+                );
     FOR1(i)
     {
         rhs.shift[i] = m_params.shift_advec_coeff * advec.shift[i] +
                        m_params.shift_Gamma_coeff * vars.B[i];
         rhs.B[i] = m_params.shift_advec_coeff * advec.B[i] +
-                   (1 - m_params.shift_advec_coeff) * advec.Gamma[i] +
-                   Gammadot[i] - m_params.eta * etaDecay * vars.B[i];
+                   (1 - m_params.shift_advec_coeff) * advec.Gamma[i]
+                   + Gammadot[i]
+                   // - vars.lapse * d1.lapse[i]  // CJ added !!!
+                   - m_params.eta * etaDecay * vars.B[i];
     }
 }
 

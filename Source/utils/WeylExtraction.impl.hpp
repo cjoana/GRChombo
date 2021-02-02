@@ -138,7 +138,6 @@ WeylExtraction::integrate_surface(int es, int el, int em,
                         a_re_part[idx] * Y_lm.Real + a_im_part[idx] * Y_lm.Im;
                     double integrand_im =
                         a_im_part[idx] * Y_lm.Real - a_re_part[idx] * Y_lm.Im;
-
                     // note the multiplication by radius here
                     double f_theta_phi_re = m_params.extraction_radii[iradius] *
                                             integrand_re * sin(theta);
@@ -170,13 +169,15 @@ WeylExtraction::write_integral(const std::vector<double> a_integral_re,
     CH_TIME("WeylExtraction::write_integral");
     // open file for writing
     SmallDataIO integral_file(a_filename, m_dt, m_time, m_restart_time,
-                              SmallDataIO::APPEND, m_first_step);
+                              SmallDataIO::APPEND);
 
     // remove any duplicate data if this is a restart
+    // note that this only does something if this is the first timestep after
+    // a restart
     integral_file.remove_duplicate_time_data();
 
     // need to write headers if this is the first timestep
-    if (m_first_step)
+    if (m_time == m_dt)
     {
         // make header strings
         std::vector<std::string> header1_strings(2 *
@@ -223,7 +224,7 @@ WeylExtraction::write_extraction(std::string a_file_prefix,
 {
     CH_TIME("WeylExtraction::write_extraction");
     SmallDataIO extraction_file(a_file_prefix, m_dt, m_time, m_restart_time,
-                                SmallDataIO::NEW, m_first_step);
+                                SmallDataIO::NEW);
 
     for (int iradius = 0; iradius < m_params.num_extraction_radii; ++iradius)
     {

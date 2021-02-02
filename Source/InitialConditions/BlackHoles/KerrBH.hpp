@@ -8,8 +8,8 @@
 
 #include "ADMConformalVars.hpp"
 #include "Cell.hpp"
+#include "CoordinateTransformations.hpp"
 #include "Coordinates.hpp"
-#include "InitialDataTools.hpp"
 #include "Tensor.hpp"
 #include "TensorAlgebra.hpp"
 #include "UserVariables.hpp" //This files needs NUM_VARS - total number of components
@@ -62,7 +62,7 @@ class KerrBH
             &spherical_shift, //!<< The spherical components of the shift
         data_t &kerr_lapse,   //!<< The lapse for the kerr solution
         const Coordinates<data_t> coords //!<< Coords of current cell
-        ) const;
+    ) const;
 };
 
 #include "KerrBH.impl.hpp"

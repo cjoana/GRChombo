@@ -46,6 +46,7 @@ data_t ScalarBubble::compute_phi(Coordinates<data_t> coords) const
     data_t rr2 = rr * rr;
     data_t out_phi = m_params.amplitudeSF * rr2 *
                      exp(-pow((rr - m_params.r_zero) / m_params.widthSF, 2.0));
+
     return out_phi;
 }
 
