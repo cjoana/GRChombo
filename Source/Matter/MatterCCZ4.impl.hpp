@@ -13,9 +13,11 @@
 
 template <class matter_t>
 MatterCCZ4<matter_t>::MatterCCZ4(matter_t a_matter, params_t params, double dx,
-                                 double sigma, int formulation, double G_Newton)
-    : CCZ4(params, dx, sigma, formulation, 0.0 /*No cosmological constant*/),
-      my_matter(a_matter), m_G_Newton(G_Newton)
+                                 double sigma, int formulation, double G_Newton,
+                                 double K_mean)
+    : CCZ4(params, dx, sigma, formulation, 0.0 /*No cosmological constant*/,
+      K_mean),
+      my_matter(a_matter), m_G_Newton(G_Newton), m_K_mean(K_mean)
 {
 }
 

@@ -13,6 +13,7 @@
 #include "Tensor.hpp"
 #include "TensorAlgebra.hpp"
 #include "simd.hpp"
+// #include "AMRReductions.hpp"
 
 #include "UserVariables.hpp" //This files needs NUM_VARS - total number of components
 
@@ -70,6 +71,7 @@ class CCZ4
     int m_formulation;
     double m_cosmological_constant;
     const FourthOrderDerivatives m_deriv;
+    double m_K_mean;
 
   public:
     /// Constructor
@@ -77,7 +79,8 @@ class CCZ4
          double dx,                  //!< The grid spacing
          double sigma,               //!< Kreiss-Oliger dissipation coefficient
          int formulation = USE_CCZ4, //!< Switches between CCZ4, BSSN,...
-         double cosmological_constant = 0 //!< Value of the cosmological const.
+         double cosmological_constant = 0, //!< Value of the cosmological const.
+         double K_mean = 0
     );
 
     /// Compute function
