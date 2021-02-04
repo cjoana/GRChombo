@@ -65,7 +65,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     const auto chris = compute_christoffel(d1.h, h_UU);
 
     data_t V_dot_dchi = 0;
-    FOR1(i){ V_dot_dchi += vars.V[i] * d1.chi[i] };
+    FOR1(i){ V_dot_dchi += vars.V[i] * d1.chi[i]; }
 
 
 	  total_rhs.D = 0;
@@ -80,22 +80,6 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     total_rhs.D += advec.D + vars.lapse * vars.K * vars.D;
     total_rhs.E += advec.E + vars.lapse * vars.K *
                             (vars.pressure + vars.E);
-
-
-
-      // Tensor<2, data_t> covdtilde2lapse;
-      // Tensor<2, data_t> covd2lapse;
-      // FOR2(k, l)
-      // {
-      //     covdtilde2lapse[k][l] = d2.lapse[k][l];
-      //     FOR1(m) { covdtilde2lapse[k][l] -= chris.ULL[m][k][l] * d1.lapse[m]; }
-      //     covd2lapse[k][l] =
-      //         0.5 * (vars.V[k] * d1.chi[l] + d1.chi[k] * vars.V[l] -
-      //                vars.h[k][l] * V_dot_dchi);
-      // }
-      // TODO: I think cov derivaties are done in tilde metric, needs to be in non-tilde one
-
-
 
 
     FOR1(i)
@@ -122,7 +106,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
 
         total_rhs.Z[i] += advec.Z[i]
                        + vars.chi * (
-                       + vars.lapse * d1.pressure[i]
+                       vars.lapse * d1.pressure[i]
                        + d1.lapse[i] * vars.pressure
                        - (vars.E + vars.D) * d1.lapse[i]   )
                        + vars.lapse * vars.K * vars.Z[i];
