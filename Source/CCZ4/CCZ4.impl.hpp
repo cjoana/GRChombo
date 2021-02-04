@@ -14,11 +14,13 @@
 #include "DimensionDefinitions.hpp"
 #include "GRInterval.hpp"
 #include "VarsTools.hpp"
+// #include "AMRReductions.hpp"
 
 inline CCZ4::CCZ4(params_t params, double dx, double sigma, int formulation,
-                  double cosmological_constant)
+                  double cosmological_constant, double K_mean)
     : m_params(params), m_sigma(sigma), m_formulation(formulation),
-      m_cosmological_constant(cosmological_constant), m_deriv(dx)
+      m_cosmological_constant(cosmological_constant), m_deriv(dx),
+      m_K_mean(K_mean)
 {
     // A user who wants to use BSSN should also have damping paramters = 0
     if (m_formulation == USE_BSSN)
@@ -218,12 +220,17 @@ void CCZ4::rhs_equation(vars_t<data_t> &rhs, const vars_t<data_t> &vars,
 
     const data_t etaDecay = 1.;
 
+
+
+    data_t K_mean =  m_K_mean;
+    // std::cout << "    K_mean ::  " <<  K_mean  <<  vars.K << '\n';
+
     rhs.lapse = m_params.lapse_advec_coeff * advec.lapse -
                 m_params.lapse_coeff * pow(vars.lapse, m_params.lapse_power) *
                 (
-                  vars.K +
+                  vars.K + K_mean
                   //tr_A2   +
-                  pow(ricci.scalar*ricci.scalar, 0.5) // CJ added !!!
+                  //pow(ricci.scalar*ricci.scalar, 0.5) // CJ added !!!
                   - 2 * vars.Theta
                 );
     FOR1(i)
