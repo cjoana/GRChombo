@@ -240,6 +240,7 @@ void PerfectFluid<eos_t>::compute(
     // Redefine variables
     data_t Lorentz;
     Lorentz = sqrt(1 - V2);
+    up_vars.W = 1./Lorentz;
     up_vars.density = vars.D / Lorentz;
     pressure = omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
     up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;
