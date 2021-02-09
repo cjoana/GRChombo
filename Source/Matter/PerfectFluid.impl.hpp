@@ -21,6 +21,8 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     emtensor_t<data_t> out;
     Tensor<1, data_t> u_i;   // 4-velocity with lower indices
 
+    data_t  enthalpy = 1 + vars.energy + vars.pressure/vars.density;
+
     FOR1(i)
     {
       u_i[i] = vars.Z[i] * vars.W / (vars.E + vars.D + vars.pressure);
@@ -32,7 +34,7 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     FOR2(i, j)
     {
         out.Sij[i][j] =
-          vars.density * vars.enthalpy *   u_i[i] * u_i[j] +
+          vars.density * enthalpy *   u_i[i] * u_i[j] +
           vars.pressure * vars.h[i][j]/vars.chi;
     }
 
@@ -186,7 +188,7 @@ void PerfectFluid<eos_t>::compute(
     S2 = 0.0;
     FOR2(i, j)
     {
-      S2 += vars.Z[i] * vars.Z[j] * h_UU[i][j]; // * geo_vars.chi;
+      S2 += vars.Z[i] * vars.Z[j] * h_UU[i][j] * geo_vars.chi;
     }
 
 
@@ -242,35 +244,14 @@ void PerfectFluid<eos_t>::compute(
     data_t Lorentz;
     Lorentz = sqrt(1 - V2);
     up_vars.W = 1./Lorentz;
-    up_vars.density = vars.D / Lorentz;
-    pressure = omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
+    up_vars.density = vars.D / up_vars.W;
+    pressure =  A - vars.D - vars.E; //  omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
     up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;
     my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
     up_vars.pressure = pressure;
-    up_vars.enthalpy = enthalpy;
-
-    /*
-    up_vars.energy = (vars.E + vars.D * ( 1 - up_vars.W)
-                     + pressure * (1 - up_vars.W * up_vars.W))
-                     / vars.D / up_vars.W;
-
-    my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
-    up_vars.pressure = pressure;
-    up_vars.enthalpy = enthalpy;
-    up_vars.W = 1.0/ sqrt(1.0 - V2);
+    // up_vars.enthalpy = enthalpy;
 
 
-    // FOR1(i)
-    {
-      V_i[i] = vars.Z[i] / (vars.E + vars.D + pressure);
-    }
-
-    FOR1(i) { u_i[i] = V_i[i] * up_vars.W; }
-    u0 = up_vars.W / geo_vars.lapse;
-
-    FOR1(i) { up_vars.V[i] = u_i[i] / geo_vars.lapse / u0
-                              + geo_vars.shift[i] / geo_vars.lapse;  }
-    */
 
     FOR1(i) {
        up_vars.V[i] = 0;
@@ -284,7 +265,7 @@ void PerfectFluid<eos_t>::compute(
     current_cell.store_vars(up_vars.density, c_density);
     current_cell.store_vars(up_vars.energy, c_energy);
     current_cell.store_vars(up_vars.pressure, c_pressure);
-    current_cell.store_vars(up_vars.enthalpy, c_enthalpy);
+    // current_cell.store_vars(up_vars.enthalpy, c_enthalpy);
     current_cell.store_vars(up_vars.V, GRInterval<c_V1, c_V3>());
     current_cell.store_vars(up_vars.W, c_W);
 }
