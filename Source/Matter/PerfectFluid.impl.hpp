@@ -342,6 +342,10 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   pressure = fl_dens*omega;
   Lorentz = sqrt( (fl_dens + pressure)/(vars.E + vars.D + pressure));
 
+  if (!(Lorentz == Lorentz) || Lorentz > 1e8){
+    Lorentz = 1e-8;
+  }
+
   // //DEBUG
   // if (!(fl_dens == fl_dens)){
   //
