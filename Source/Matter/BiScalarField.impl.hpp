@@ -42,10 +42,9 @@ emtensor_t<data_t> ScalarField<potential_t>::compute_emtensor(
     // compute potential and add constributions to EM Tensor
     my_potential.compute_potential(V_of_phi, dVdphi, V_of_phi2, dVdphi2, vars);
 
-    out.rho += V_of_phi + V_of_phi2 ;
-    out.S += -3.0 * V_of_phi  - 3.0 * V_of_phi2 ;
-    FOR2(i, j) { out.Sij[i][j] += -vars.h[i][j] * V_of_phi / vars.chi
-                                  -vars.h[i][j] * V_of_phi2 / vars.chi; }
+    out.rho += V_of_phi;
+    out.S += -3.0 * V_of_phi;
+    FOR2(i, j) { out.Sij[i][j] += -vars.h[i][j] * V_of_phi / vars.chi;}
 
     return out;
 }
@@ -79,7 +78,7 @@ void ScalarField<potential_t>::emtensor_excl_potential(
     out.S = vars.chi * TensorAlgebra::compute_trace(out.Sij, h_UU);
 
     // S_i (note lower index) = - n^a T_ai
-    FOR1(i) { out.Si[i] = -d1_phi[i] * vars_sf.Pi -d1_phi2[i] * vars_sf.Pi2; }
+    FOR1(i) { out.Si[i] = -d1_phi[i] * vars_sf.Pi - d1_phi2[i] * vars_sf.Pi2; }
 
     // rho = n^a n^b T_ab
     out.rho = vars_sf.Pi * vars_sf.Pi + 0.5 * Vt +
@@ -158,7 +157,7 @@ void ScalarField<potential_t>::matter_rhs_excl_potential(
     rhs_sf.Pi = vars.lapse * vars.K * vars_sf.Pi + advec_sf.Pi;
 
     rhs_sf.phi2 = vars.lapse * vars_sf.Pi2 + advec_sf.phi2;
-    rhs_sf.Pi2 = vars.lapse * vars.K * vars_sf.Pi2 + advec_sf.phi2;
+    rhs_sf.Pi2 = vars.lapse * vars.K * vars_sf.Pi2 + advec_sf.Pi2;
 
     FOR2(i, j)
     {

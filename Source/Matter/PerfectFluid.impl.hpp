@@ -183,6 +183,7 @@ void PerfectFluid<eos_t>::compute(
     my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, vars);
     omega = dpdenergy/vars.density;
 
+    data_t Lorentz, fl_dens;
 
     // Calculate V^2
     S2 = 0.0;
@@ -191,10 +192,11 @@ void PerfectFluid<eos_t>::compute(
       S2 += vars.Z[i] * vars.Z[j] * h_UU[i][j] * geo_vars.chi;
     }
 
-
-    if (S2<0){
+    // DEBUG
+    if ((S2<0) || !(S2==S2))  {
       std::cout << "    wrong stared S2 ::  " <<  S2  << '\n';
       std::cout << "    lapse  " << geo_vars.lapse   <<'\n';
+      std::cout << "    K  " << geo_vars.K   <<'\n';
 
       std::cout << "    metric  " <<'\n';
       std::cout << "    1i " <<  geo_vars.h[0][0] << " " << geo_vars.h[0][1]
@@ -204,6 +206,17 @@ void PerfectFluid<eos_t>::compute(
       std::cout << "    3i " <<  geo_vars.h[2][0] << " " << geo_vars.h[2][1]
                 << " " << geo_vars.h[2][2]<<'\n';
     }
+    // -----------------
+    if (!( (vars.density  == vars.density) || (vars.energy == vars.density)
+            || (kin == kin)) || (kin > 1e200) ) {
+
+      std::cout << "BAD START: x  " <<  vars.density << " " << vars.energy  <<
+              " " << kin  <<'\n';
+
+      std::cout << "    D, E, W ::  " <<  vars.D << " " << vars.E  <<
+                      " " << vars.W  <<'\n';
+    }
+
 
 
     S2 = (S2 < 0) ? 0.0 : S2;
@@ -222,34 +235,35 @@ void PerfectFluid<eos_t>::compute(
     x_vec[1] = V2;
     x_vec[2] = 0;
 
-    // DEBUG
-    // -----------------
-    if (!( (vars.density  == vars.density) || (vars.energy == vars.density)
-            || (kin == kin)) || (kin > 1e200) ) {
 
-      std::cout << "BAD START: x  " <<  vars.density << " " << vars.energy  <<
-              " " << kin  <<'\n';
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    // recover_primvars_NR2D(current_cell, x_vec, S2);
+    // A = x_vec[0];
+    // V2 = x_vec[1];
+    // Lorentz = sqrt(1 - V2);
+    // // Redefine variables
+    // up_vars.W = 1./Lorentz;
+    // up_vars.density = vars.D / up_vars.W;
+    // pressure =  A - vars.D - vars.E; //  omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
+    // up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;
+    // my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+    // up_vars.pressure = pressure;
 
-      std::cout << "    D, E, W ::  " <<  vars.D << " " << vars.E  <<
-                      " " << vars.W  <<'\n';
-    }
-
-
-    recover_primvars_NR2D(current_cell, x_vec, S2);
-
-    A = x_vec[0];
-    V2 = x_vec[1];
-
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    recover_primvars_bartropic(current_cell, fl_dens, pressure, Lorentz, S2);
     // Redefine variables
-    data_t Lorentz;
-    Lorentz = sqrt(1 - V2);
-    up_vars.W = 1./Lorentz;
     up_vars.density = vars.D / up_vars.W;
-    pressure =  A - vars.D - vars.E; //  omega / (omega+1) * (A*(1 - V2)  - up_vars.density);
-    up_vars.energy = (A*(1 - V2) - (up_vars.density + pressure))/ up_vars.density;
-    my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+    up_vars.energy = fl_dens/up_vars.density - 1;
+    up_vars.W = 1./Lorentz;
     up_vars.pressure = pressure;
-    // up_vars.enthalpy = enthalpy;
+
+    // std::cout << "   omega ::  " <<  omega  << '\n';
+    // enthalpy = 1 + up_vars.energy + up_vars.pressure/up_vars.density;
+    // data_t errorR =  vars.D + vars.E
+    //         - (up_vars.density * enthalpy * up_vars.W * up_vars.W - up_vars.pressure);
+    // errorR = errorR / (vars.D + vars.E);
+    // std::cout << "   error rho ::  " <<  errorR  << '\n';
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
@@ -259,7 +273,6 @@ void PerfectFluid<eos_t>::compute(
     FOR2(i,j) {
       up_vars.V[i] += vars.Z[j] * h_UU[i][j] * geo_vars.chi / (vars.E + vars.D + pressure);
     }
-
 
     // Overwrite new values for fluid variables
     current_cell.store_vars(up_vars.density, c_density);
@@ -273,6 +286,79 @@ void PerfectFluid<eos_t>::compute(
 
 
 
+template <class eos_t>
+template <class data_t>
+void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
+                           data_t &fl_dens,
+                           data_t &pressure,
+                           data_t &Lorentz,
+                           const data_t &S2) const
+{
+  const auto vars = current_cell.template load_vars<Vars>();
+  auto up_vars = current_cell.template load_vars<Vars>();
+  data_t omega = 0;
+  data_t  enthalpy, dpdrho, dpdenergy ;
+  enthalpy = dpdrho = dpdenergy = 0.0;
+
+  my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
+  omega = dpdenergy/up_vars.density;
+
+
+  if (omega == -1){
+    fl_dens = vars.E + vars.D;
+  }
+  if (omega == 0){
+    fl_dens = vars.E + vars.D - S2/(vars.E + vars.D);
+  }
+
+  if (omega > 0 && omega <= 1 ){
+      fl_dens = ((omega -1)*(vars.E + vars.D) +
+                  sqrt((omega +1)*(vars.E + vars.D)*(vars.E + vars.D)
+                      - 4*omega*S2)
+                )/(2*omega);
+  }
+
+  if (omega > 1){
+      data_t eplus, eminus;
+      eplus = ((omega -1)*(vars.E + vars.D) +
+                  sqrt((omega +1)*(vars.E + vars.D)*(vars.E + vars.D)
+                      - 4*omega*S2)
+                )/(2*omega);
+      eminus = ((omega -1)*(vars.E + vars.D) -
+                  sqrt((omega +1)*(vars.E + vars.D)*(vars.E + vars.D)
+                      - 4*omega*S2)
+                )/(2*omega);
+
+      fl_dens = (eplus > eminus) ? eplus : eminus;
+  }
+
+  pressure = fl_dens*omega;
+  Lorentz = sqrt( (fl_dens + pressure)/(vars.E + vars.D + pressure));
+
+  // //DEBUG
+  // if (!(fl_dens == fl_dens)){
+  //
+  //     std::cout << "   fl_dens ::  " <<  fl_dens  << '\n';
+  //     std::cout << "   omega ::  " <<  omega  << '\n';
+  //     std::cout << "   S2 ::  " <<  S2  << '\n';
+  //
+  //     std::cout << "   root1 ::  " <<
+  //     (omega +1)*(vars.E + vars.D)*(vars.E + vars.D) << '\n';
+  //     std::cout << "   root2 ::  " <<
+  //     - 4*omega*S2 << '\n';
+  //     std::cout << "   root ::  " <<
+  //     (omega +1)*(vars.E + vars.D)*(vars.E + vars.D) - 4*omega*S2 << '\n';
+  //
+  //
+  //     // std::cout << "   1/W ::  " <<  Lorentz  << '\n';
+  //     // std::cout << "   press ::  " <<  pressure  << '\n';
+  //     // std::cout << "   E+D+P ::  " <<  vars.E + vars.D + pressure  << '\n';
+  //
+  //     std::cout << "   " << '\n';
+  //   }
+
+
+}
 
 
 template <class eos_t>

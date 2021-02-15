@@ -100,6 +100,8 @@ template <class eos_t = DefaultEOS> class PerfectFluid
        Tensor<2, data_t> h;
        Tensor<1, data_t> shift;
 
+       data_t K;
+
 
       /// Defines the mapping between members of Vars and Chombo grid
       /// variables (enum in User_Variables)
@@ -109,7 +111,9 @@ template <class eos_t = DefaultEOS> class PerfectFluid
           VarsTools::define_enum_mapping(mapping_function, c_lapse,
             lapse);
 
-            VarsTools::define_enum_mapping(mapping_function, c_chi,
+          VarsTools::define_enum_mapping(mapping_function, c_K, K);
+
+          VarsTools::define_enum_mapping(mapping_function, c_chi,
               chi);
 
           VarsTools::define_enum_mapping(mapping_function,
@@ -182,6 +186,14 @@ template <class eos_t = DefaultEOS> class PerfectFluid
     void recover_primvars_NR3D(Cell<data_t> current_cell,
                                Tensor<1, data_t> &x_vec,
                                const data_t &S2) const;
+
+
+     template <class data_t>
+     void recover_primvars_bartropic(Cell<data_t> current_cell,
+                                data_t &fl_dens,
+                                data_t &pressure,
+                                data_t &Lorentz,
+                                const data_t &S2) const;
 
 };
 
