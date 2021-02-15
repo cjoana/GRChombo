@@ -210,6 +210,13 @@ void PerfectFluid<eos_t>::compute(
                 << " " << geo_vars.h[1][2]<<'\n';
       std::cout << "    3i " <<  geo_vars.h[2][0] << " " << geo_vars.h[2][1]
                 << " " << geo_vars.h[2][2]<<'\n';
+
+      S2 = 0;
+      FOR1(i)
+      {
+        S2 += vars.Z[i] * vars.Z[i] * geo_vars.chi;
+      }
+
     }
     // -----------------
     if (!( (vars.density  == vars.density) || (vars.energy == vars.density)
