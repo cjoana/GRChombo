@@ -186,7 +186,7 @@ void PerfectFluid<eos_t>::compute(
     up_vars.density = 1.0;
     up_vars.energy = 1.0;
     my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
-    omega = dpdenergy/vars.density;
+    omega = dpdenergy/up_vars.density;
 
     data_t Lorentz, fl_dens;
 
@@ -308,7 +308,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   up_vars.density = 1.0;
   up_vars.energy = 1.0;
   my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
-  omega = dpdenergy/vars.density;
+  omega = dpdenergy/up_vars.density;
 
 
   if (omega == -1){
@@ -346,6 +346,8 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
     std::cout << "   1/W ::  " <<  Lorentz  << '\n';
     std::cout << "   press ::  " <<  pressure  << '\n';
     std::cout << "   E+D+P ::  " <<  vars.E + vars.D + pressure  << '\n';
+
+    Lorentz = 1e-8;
   }
 
   // //DEBUG
