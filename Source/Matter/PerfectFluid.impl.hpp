@@ -19,13 +19,15 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     const Tensor<2, data_t> &h_UU, const Tensor<3, data_t> &chris_ULL) const
 {
     emtensor_t<data_t> out;
-    Tensor<1, data_t> u_i;   // 4-velocity with lower indices
+    Tensor<1, data_t> V_i;   // 4-velocity with lower indices
 
-    data_t  enthalpy = 1 + vars.energy + vars.pressure/vars.density;
+    // data_t  enthalpy = 1 + vars.energy + vars.pressure/vars.density;
+    data_t  fluidT = vars.D + vars.E + vars.pressure;
+
 
     FOR1(i)
     {
-      u_i[i] = vars.Z[i] * vars.W / (vars.E + vars.D + vars.pressure);
+      V_i[i] = vars.Z[i] / fluidT;
     }
 
 
@@ -34,7 +36,7 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     FOR2(i, j)
     {
         out.Sij[i][j] =
-          vars.density * enthalpy *   u_i[i] * u_i[j] +
+          fluidT  * V_i[i] * V_i[j] +
           vars.pressure * vars.h[i][j]/vars.chi;
     }
 
