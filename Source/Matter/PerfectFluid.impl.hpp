@@ -22,7 +22,8 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     Tensor<1, data_t> V_i;   // 4-velocity with lower indices
 
     // data_t  enthalpy = 1 + vars.energy + vars.pressure/vars.density;
-    data_t my_D = (vars.D > -vars.E)? vars.D : -vars.E;
+    // data_t my_D = (vars.D > -vars.E)? vars.D : -vars.E;
+    data_t my_D =  simd_max(vars.D,  -vars.E);
     data_t  fluidT = my_D + vars.E + vars.pressure;
 
 
@@ -74,7 +75,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     FOR1(i){ V_dot_dchi += vars.V[i] * d1.chi[i]; }
 
 
-    data_t my_D = (vars.D > -vars.E)? vars.D : -vars.E;
+    data_t my_D =  simd_max(vars.D,  -vars.E);
 
 	  total_rhs.D = 0;
     total_rhs.E = 0;
@@ -174,7 +175,8 @@ void PerfectFluid<eos_t>::compute(
 
     Tensor<1, data_t> x_vec;         // primary components to optimize
 
-    up_vars.D =  (vars.D > -vars.E)? vars.D : -vars.E;
+    // up_vars.D =  (vars.D > -vars.E)? vars.D : -vars.E;
+    up_vars.D =  simd_max(vars.D,  -vars.E);  // return (a > b) ? a : b;
 
     // Tensor<2, data_t> cofactors;
     data_t A = vars.E + up_vars.D + vars.pressure;  // A = E + D + Pressure = density * enthalpy * W^2
@@ -323,7 +325,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
   omega = dpdenergy/up_vars.density;
 
-  up_vars.D =  (vars.D > -vars.E)? vars.D : -vars.E;
+  up_vars.D =   simd_max(vars.D,  -vars.E); // (vars.D > -vars.E)? vars.D : -vars.E;
 
   if (omega == -1){
     fl_dens = vars.E + up_vars.D;
