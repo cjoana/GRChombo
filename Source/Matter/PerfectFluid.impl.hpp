@@ -348,6 +348,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
 
 
   fl_dens = (fl_dens < 1e-8 ) ? 1e-8 : fl_dens;
+  fl_dens = !(fl_dens == fl_dens ) ? 1e-8 : fl_dens;
 
 
   pressure = fl_dens*omega;
