@@ -296,7 +296,7 @@ void PerfectFluid<eos_t>::compute(
     }
 
     // Overwrite new values for fluid variables
-    // current_cell.store_vars(up_vars.D, c_D);
+    current_cell.store_vars(up_vars.D, c_D);
     current_cell.store_vars(up_vars.density, c_density);
     current_cell.store_vars(up_vars.energy, c_energy);
     current_cell.store_vars(up_vars.pressure, c_pressure);
@@ -359,6 +359,8 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
 
 
   fl_dens = (fl_dens < 1e-8 ) ? 1e-8 : fl_dens;
+  pressure = fl_dens*omega;
+  Lorentz = sqrt( (fl_dens + pressure)/(vars.E + up_vars.D + pressure));
 
   if (!(fl_dens == fl_dens)){
     std::cout << "   omega ::  " <<  omega  << '\n';
@@ -368,18 +370,17 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
         (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)- 4*omega*S2  << '\n';
 
     fl_dens =  1e-8;
+    pressure = fl_dens*omega;
+    Lorentz = 1.0;
   }
 
-  pressure = fl_dens*omega;
-  Lorentz = sqrt( (fl_dens + pressure)/(vars.E + up_vars.D + pressure));
-
-  if (!(Lorentz == Lorentz) || Lorentz < 1e-8){
-    std::cout << "   1/W ::  " <<  Lorentz  << '\n';
-    std::cout << "   press ::  " <<  pressure  << '\n';
-    std::cout << "   E+D ::  " <<  vars.E + up_vars.D + pressure  << '\n';
-
-    Lorentz = 1e-8;
-  }
+  // if (!(Lorentz == Lorentz) || Lorentz < 1e-8){
+  //   std::cout << "   1/W ::  " <<  Lorentz  << '\n';
+  //   std::cout << "   press ::  " <<  pressure  << '\n';
+  //   std::cout << "   E+D ::  " <<  vars.E + up_vars.D + pressure  << '\n';
+  //
+  //   Lorentz = 1e-8;
+  // }
 
   // //DEBUG
   // if (!(fl_dens == fl_dens)){
