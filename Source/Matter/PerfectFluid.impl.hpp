@@ -22,7 +22,8 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
     Tensor<1, data_t> V_i;   // 4-velocity with lower indices
 
     // data_t  enthalpy = 1 + vars.energy + vars.pressure/vars.density;
-    data_t  fluidT = vars.D + vars.E + vars.pressure;
+    data_t my_D = (vars.D > -vars.E)? vars.D : -vars.E;
+    data_t  fluidT = my_D + vars.E + vars.pressure;
 
 
     FOR1(i)
@@ -49,7 +50,7 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
 
     // rho = n^a n^b T_ab
     // out.rho =  vars.density * vars.enthalpy * vars.W * vars.W - vars.pressure;
-    out.rho =  vars.D + vars.E;
+    out.rho =  my_D + vars.E;
 
     return out;
 }
@@ -73,6 +74,8 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     FOR1(i){ V_dot_dchi += vars.V[i] * d1.chi[i]; }
 
 
+    data_t my_D = (vars.D > -vars.E)? vars.D : -vars.E;
+
 	  total_rhs.D = 0;
     total_rhs.E = 0;
 
@@ -82,7 +85,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
       K_tensor[i][j] = (vars.A[i][j] + vars.h[i][j] * vars.K / 3.) / vars.chi;
     }
 
-    total_rhs.D += advec.D + vars.lapse * vars.K * vars.D;
+    total_rhs.D += advec.D + vars.lapse * vars.K * my_D;
     total_rhs.E += advec.E + vars.lapse * vars.K *
                             (vars.pressure + vars.E);
 
@@ -91,8 +94,8 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     {
         total_rhs.D +=  vars.chi * (
                         - vars.lapse * (d1.D[i] * vars.V[i]
-                                    + vars.D * d1.V[i][i])
-                       - d1.lapse[i] * vars.D * vars.V[i] )
+                                    + my_D * d1.V[i][i])
+                       - d1.lapse[i] * my_D * vars.V[i] )
                       +  // part of cov.derivative w.r.t. non-tilde gamma
                       (vars.V[i] * d1.chi[i] - vars.h[i][i] * V_dot_dchi);
 
@@ -103,7 +106,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                        - vars.lapse * (d1.pressure[i] * vars.V[i]
                                     + vars.pressure * d1.V[i][i])
                        - d1.lapse[i] * vars.pressure * vars.V[i]  )
-                       - (vars.D + vars.E + vars.pressure) *
+                       - (my_D + vars.E + vars.pressure) *
                                     vars.V[i] * d1.lapse[i]
                        +  // part of cov.derivative w.r.t. non-tilde gamma
                        (vars.V[i] * d1.chi[i] - vars.h[i][i] * V_dot_dchi);
@@ -113,7 +116,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                        + vars.chi * (
                        vars.lapse * d1.pressure[i]
                        + d1.lapse[i] * vars.pressure
-                       - (vars.E + vars.D) * d1.lapse[i]   )
+                       - (vars.E + my_D) * d1.lapse[i]   )
                        + vars.lapse * vars.K * vars.Z[i];
     }
 
@@ -127,13 +130,13 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                           0.5 * (vars.V[i] * d1.chi[j] + d1.chi[i] * vars.V[j] -
                          vars.h[i][j] * V_dot_dchi);
 
-        total_rhs.D += - vars.lapse * vars.D * vars.V[j] *
+        total_rhs.D += - vars.lapse * my_D * vars.V[j] *
                             vars.chi * chris.ULL[i][i][j];
 
 
         total_rhs.E += - (vars.lapse * vars.E + vars.lapse * vars.pressure ) *
                             vars.chi  * vars.V[j] * chris.ULL[i][i][j]
-                       + (vars.D + vars.E + vars.pressure) *
+                       + (my_D + vars.E + vars.pressure) *
                             vars.lapse * vars.V[i] * vars.V[j] *
                             K_tensor[i][j];
 
@@ -171,8 +174,10 @@ void PerfectFluid<eos_t>::compute(
 
     Tensor<1, data_t> x_vec;         // primary components to optimize
 
+    up_vars.D =  (vars.D > -vars.E)? vars.D : -vars.E;
+
     // Tensor<2, data_t> cofactors;
-    data_t A = vars.E + vars.D + vars.pressure;  // A = E + D + Pressure = density * enthalpy * W^2
+    data_t A = vars.E + up_vars.D + vars.pressure;  // A = E + D + Pressure = density * enthalpy * W^2
     data_t V2 = 0.0;
     data_t V2_max = 1 - 1e-15;
     data_t kin = 0;  // =  vars.density * vars.energy;  // kin = density * energy
@@ -225,7 +230,7 @@ void PerfectFluid<eos_t>::compute(
       std::cout << "BAD START: x  " <<  vars.density << " " << vars.energy  <<
               " " << kin  <<'\n';
 
-      std::cout << "    D, E, W ::  " <<  vars.D << " " << vars.E  <<
+      std::cout << "    D, E, W ::  " <<  up_vars.D << " " << vars.E  <<
                       " " << vars.W  <<'\n';
     }
 
@@ -264,7 +269,7 @@ void PerfectFluid<eos_t>::compute(
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     recover_primvars_bartropic(current_cell, fl_dens, pressure, Lorentz, S2);
     // Redefine variables
-    up_vars.density = vars.D / up_vars.W;
+    up_vars.density = up_vars.D / up_vars.W;
     up_vars.energy = fl_dens/up_vars.density - 1;
     up_vars.W = 1./Lorentz;
     up_vars.pressure = pressure;
@@ -283,10 +288,11 @@ void PerfectFluid<eos_t>::compute(
        up_vars.V[i] = 0;
      }
     FOR2(i,j) {
-      up_vars.V[i] += vars.Z[j] * h_UU[i][j] * geo_vars.chi / (vars.E + vars.D + pressure);
+      up_vars.V[i] += vars.Z[j] * h_UU[i][j] * geo_vars.chi / (vars.E + up_vars.D + pressure);
     }
 
     // Overwrite new values for fluid variables
+    current_cell.store_vars(up_vars.D, c_D);
     current_cell.store_vars(up_vars.density, c_density);
     current_cell.store_vars(up_vars.energy, c_energy);
     current_cell.store_vars(up_vars.pressure, c_pressure);
@@ -317,29 +323,30 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
   omega = dpdenergy/up_vars.density;
 
+  up_vars.D =  (vars.D > -vars.E)? vars.D : -vars.E;
 
   if (omega == -1){
-    fl_dens = vars.E + vars.D;
+    fl_dens = vars.E + up_vars.D;
   }
   if (omega == 0){
-    fl_dens = vars.E + vars.D - S2/(vars.E + vars.D);
+    fl_dens = vars.E + up_vars.D - S2/(vars.E + up_vars.D);
   }
 
   if (omega > 0 && omega <= 1 ){
-      fl_dens = ((omega -1)*(vars.E + vars.D) +
-                  sqrt((omega +1)*(vars.E + vars.D)*(vars.E + vars.D)
+      fl_dens = ((omega -1)*(vars.E + up_vars.D) +
+                  sqrt((omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)
                       - 4*omega*S2)
                 )/(2*omega);
   }
 
   if (omega > 1){
       data_t eplus, eminus;
-      eplus = ((omega -1)*(vars.E + vars.D) +
-                  sqrt((omega +1)*(vars.E + vars.D)*(vars.E + vars.D)
+      eplus = ((omega -1)*(vars.E + up_vars.D) +
+                  sqrt((omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)
                       - 4*omega*S2)
                 )/(2*omega);
-      eminus = ((omega -1)*(vars.E + vars.D) -
-                  sqrt((omega +1)*(vars.E + vars.D)*(vars.E + vars.D)
+      eminus = ((omega -1)*(vars.E + up_vars.D) -
+                  sqrt((omega +1)*(vars.E + up_vars.D)*(up_vars.E + up_vars.D)
                       - 4*omega*S2)
                 )/(2*omega);
 
@@ -352,20 +359,20 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   if (!(fl_dens == fl_dens)){
     std::cout << "   omega ::  " <<  omega  << '\n';
     std::cout << "   S2 ::  " <<  S2  << '\n';
-    std::cout << "   E+D ::  " << vars.E + vars.D   << '\n';
+    std::cout << "   E+D ::  " << vars.E + up_vars.D   << '\n';
     std::cout << "   in_sqrt ::  " <<
-        (omega +1)*(vars.E + vars.D)*(vars.E + vars.D)- 4*omega*S2  << '\n';
-            
+        (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)- 4*omega*S2  << '\n';
+
     fl_dens =  1e-8;
   }
 
   pressure = fl_dens*omega;
-  Lorentz = sqrt( (fl_dens + pressure)/(vars.E + vars.D + pressure));
+  Lorentz = sqrt( (fl_dens + pressure)/(vars.E + up_vars.D + pressure));
 
   if (!(Lorentz == Lorentz) || Lorentz < 1e-8){
     std::cout << "   1/W ::  " <<  Lorentz  << '\n';
     std::cout << "   press ::  " <<  pressure  << '\n';
-    std::cout << "   E+D ::  " <<  vars.E + vars.D + pressure  << '\n';
+    std::cout << "   E+D ::  " <<  vars.E + up_vars.D + pressure  << '\n';
 
     Lorentz = 1e-8;
   }
