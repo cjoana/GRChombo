@@ -273,9 +273,9 @@ void PerfectFluid<eos_t>::compute(
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     recover_primvars_bartropic(current_cell, fl_dens, pressure, Lorentz, S2);
     // Redefine variables
+    up_vars.W = 1./Lorentz;
     up_vars.density = up_vars.D / up_vars.W;
     up_vars.energy = fl_dens/up_vars.density - 1;
-    up_vars.W = 1./Lorentz;
     up_vars.pressure = pressure;
 
     // std::cout << "   omega ::  " <<  omega  << '\n';
