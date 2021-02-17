@@ -348,8 +348,16 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
 
 
   fl_dens = (fl_dens < 1e-8 ) ? 1e-8 : fl_dens;
-  fl_dens = !(fl_dens == fl_dens ) ? 1e-8 : fl_dens;
 
+  if (!(fl_dens == fl_dens)){
+    std::cout << "   omega ::  " <<  omega  << '\n';
+    std::cout << "   S2 ::  " <<  S2  << '\n';
+    std::cout << "   E+D ::  " << vars.E + vars.D   << '\n';
+    std::cout << "   in_sqrt ::  " <<
+        (omega +1)*(vars.E + vars.D)*(vars.E + vars.D)- 4*omega*S2  << '\n';
+            
+    fl_dens =  1e-8;
+  }
 
   pressure = fl_dens*omega;
   Lorentz = sqrt( (fl_dens + pressure)/(vars.E + vars.D + pressure));
@@ -357,7 +365,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   if (!(Lorentz == Lorentz) || Lorentz < 1e-8){
     std::cout << "   1/W ::  " <<  Lorentz  << '\n';
     std::cout << "   press ::  " <<  pressure  << '\n';
-    std::cout << "   E+D+P ::  " <<  vars.E + vars.D + pressure  << '\n';
+    std::cout << "   E+D ::  " <<  vars.E + vars.D + pressure  << '\n';
 
     Lorentz = 1e-8;
   }
