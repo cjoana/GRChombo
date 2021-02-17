@@ -30,7 +30,7 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
 
     FOR1(i)
     {
-      V_i[i] = vars.Z[i] / fluidT;
+      V_i[i] = simd_min(vars.Z[i] / fluidT, 1.0 -1e-8);
     }
 
 
@@ -294,6 +294,11 @@ void PerfectFluid<eos_t>::compute(
     FOR2(i,j) {
       up_vars.V[i] += vars.Z[j] * h_UU[i][j] * geo_vars.chi / (vars.E + up_vars.D + pressure);
     }
+
+    FOR1(i) {
+       up_vars.V[i] = simd_min(up_vars.V[i], 1.0 - 1e-8);
+    }
+
 
     // Overwrite new values for fluid variables
     current_cell.store_vars(up_vars.D, c_D);
