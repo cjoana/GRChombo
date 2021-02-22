@@ -297,6 +297,7 @@ void PerfectFluid<eos_t>::compute(
 
     FOR1(i) {
        up_vars.V[i] = simd_min(up_vars.V[i], 1.0 - 1e-8);
+       up_vars.V[i] = simd_max(up_vars.V[i], -1.0 + 1e-8);
     }
 
 
@@ -355,7 +356,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
 
       eplus = ((omega -1)*(vars.E + up_vars.D) +  sqrt(in_sqrt))/(2*omega);
       eminus = ((omega -1)*(vars.E + up_vars.D) - sqrt(in_sqrt))/(2*omega);
-      
+
       fl_dens = (eplus > eminus) ? eplus : eminus;
   }
 
