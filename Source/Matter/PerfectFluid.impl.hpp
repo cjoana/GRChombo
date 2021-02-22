@@ -326,6 +326,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   data_t omega = 0;
   data_t  enthalpy, dpdrho, dpdenergy ;
   enthalpy = dpdrho = dpdenergy = 0.0;
+  data_t in_sqrt = 0;
 
   up_vars.density = 1.0;
   up_vars.energy = 1.0;
@@ -342,23 +343,19 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   }
 
   if (omega > 0 && omega <= 1 ){
-      fl_dens = ((omega -1)*(vars.E + up_vars.D) +
-                  sqrt((omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)
-                      - 4*omega*S2)
-                )/(2*omega);
+      in_sqrt = (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)-4*omega*S2;
+      in_sqrt = (in_sqrt > 0) ? in_sqrt : 0;
+      fl_dens = ((omega -1)*(vars.E + up_vars.D) + sqrt(in_sqrt))/(2*omega);
   }
 
   if (omega > 1){
       data_t eplus, eminus;
-      eplus = ((omega -1)*(vars.E + up_vars.D) +
-                  sqrt((omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)
-                      - 4*omega*S2)
-                )/(2*omega);
-      eminus = ((omega -1)*(vars.E + up_vars.D) -
-                  sqrt((omega +1)*(vars.E + up_vars.D)*(up_vars.E + up_vars.D)
-                      - 4*omega*S2)
-                )/(2*omega);
+      in_sqrt = (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)-4*omega*S2;
+      in_sqrt = (in_sqrt > 0) ? in_sqrt : 0;
 
+      eplus = ((omega -1)*(vars.E + up_vars.D) +  sqrt(in_sqrt))/(2*omega);
+      eminus = ((omega -1)*(vars.E + up_vars.D) - sqrt(in_sqrt))/(2*omega);
+      
       fl_dens = (eplus > eminus) ? eplus : eminus;
   }
 
@@ -367,13 +364,12 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   pressure = fl_dens*omega;
   Lorentz = sqrt( (fl_dens + pressure)/(vars.E + up_vars.D + pressure));
 
-  if (!(fl_dens == fl_dens)){
-    std::cout << "   omega ::  " <<  omega  << '\n';
-    std::cout << "   S2 ::  " <<  S2  << '\n';
-    std::cout << "   E+D ::  " << vars.E + up_vars.D   << '\n';
-    std::cout << "   in_sqrt ::  " <<
-        (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)- 4*omega*S2  << '\n';
-
+  if (!(fl_dens == fl_dens) || !(Lorentz == Lorentz)){
+    // std::cout << "   omega ::  " <<  omega  << '\n';
+    // std::cout << "   S2 ::  " <<  S2  << '\n';
+    // std::cout << "   E+D ::  " << vars.E + up_vars.D   << '\n';
+    // std::cout << "   in_sqrt ::  " <<
+    //     (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)- 4*omega*S2  << '\n';
     fl_dens =  1e-8;
     pressure = fl_dens*omega;
     Lorentz = 1.0;
