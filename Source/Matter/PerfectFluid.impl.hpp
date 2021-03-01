@@ -132,7 +132,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     {
         total_rhs.Z[i] +=  vars.chi * (
                           - vars.lapse * (d1.V[j][j] * vars.Z[i] +
-                                     d1.Z[j][i] * vars.V[j])
+                                     d1.Z[i][j] * vars.V[j])        // check indices in d1.Z[i][j] (should be  D_j S_i)
                           - d1.lapse[j] * vars.V[j] * vars.Z[i] )
             //
             // part of cov.derivative w.r.t. non-tilde gamma of V^k ( = 0)
