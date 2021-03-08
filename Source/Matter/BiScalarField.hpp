@@ -3,8 +3,8 @@
  * Please refer to LICENSE in GRChombo's root directory.
  */
 
-#ifndef SCALARFIELD_HPP_
-#define SCALARFIELD_HPP_
+#ifndef BISCALARFIELD_HPP_
+#define BISCALARFIELD_HPP_
 
 #include "CCZ4Geometry.hpp"
 #include "DefaultPotential.hpp"
@@ -43,6 +43,10 @@ template <class potential_t = DefaultPotential> class ScalarField
     {
         data_t phi;
         data_t Pi;
+
+        data_t phi2;
+        data_t Pi2;
+
     };
 
     //! Structure containing the rhs variables for the matter fields
@@ -51,6 +55,9 @@ template <class potential_t = DefaultPotential> class ScalarField
         data_t phi;
         data_t Pi;
 
+        data_t phi2;
+        data_t Pi2;
+
         /// Defines the mapping between members of Vars and Chombo grid
         /// variables (enum in User_Variables)
         template <typename mapping_function_t>
@@ -58,6 +65,9 @@ template <class potential_t = DefaultPotential> class ScalarField
         {
             VarsTools::define_enum_mapping(mapping_function, c_phi, phi);
             VarsTools::define_enum_mapping(mapping_function, c_Pi, Pi);
+
+            VarsTools::define_enum_mapping(mapping_function, c_phi2, phi2);
+            VarsTools::define_enum_mapping(mapping_function, c_Pi2, Pi2);
         }
     };
 
@@ -67,12 +77,15 @@ template <class potential_t = DefaultPotential> class ScalarField
     {
         data_t phi;
 
+        data_t phi2;
+
         /// Defines the mapping between members of Vars and Chombo grid
         ///  variables (enum in User_Variables)
         template <typename mapping_function_t>
         void enum_mapping(mapping_function_t mapping_function)
         {
             VarsTools::define_enum_mapping(mapping_function, c_phi, phi);
+            VarsTools::define_enum_mapping(mapping_function, c_phi2, phi2);
         }
     };
 
@@ -95,6 +108,8 @@ template <class potential_t = DefaultPotential> class ScalarField
         const SFObject<data_t> &vars_sf, //!< the value of the sf variables
         const Tensor<1, data_t>
             &d1_phi,                   //!< the value of the first deriv of phi
+        const Tensor<1, data_t>
+            &d1_phi2,                  //!< the value of the first deriv of phi
         const Tensor<2, data_t> &h_UU, //!< the inverse metric (raised indices).
         const Tensor<3, data_t>
             &chris_ULL); //!< the conformal christoffel symbol
@@ -123,9 +138,11 @@ template <class potential_t = DefaultPotential> class ScalarField
         const vars_t<Tensor<1, data_t>> &d1, //!< the value of the 1st derivs
         const Tensor<1, data_t> &d1_phi, //!< the value of the 1st derivs of phi
         const Tensor<2, data_t> &d2_phi, //!< the value of the 2nd derivs of phi
+        const Tensor<1, data_t> &d1_phi2, //!< the value of the 1st derivs of phi
+        const Tensor<2, data_t> &d2_phi2, //!< the value of the 2nd derivs of phi
         const SFObject<data_t> &advec_sf); //!< advection terms for the sf vars
 };
 
-#include "ScalarField.impl.hpp"
+#include "BiScalarField.impl.hpp"
 
-#endif /* SCALARFIELD_HPP_ */
+#endif /* BISCALARFIELD_HPP_ */

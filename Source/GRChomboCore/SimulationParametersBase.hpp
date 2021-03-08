@@ -8,7 +8,7 @@
 
 // General includes
 #include "BoundaryConditions.hpp"
-#include "CCZ4RHS.hpp"
+#include "CCZ4.hpp"
 #include "ChomboParameters.hpp"
 #include "GRParmParse.hpp"
 #include <limits>
@@ -48,11 +48,11 @@ class SimulationParametersBase : public ChomboParameters
         pp.load("kappa1", ccz4_base_params.kappa1, 0.1);
         pp.load("kappa2", ccz4_base_params.kappa2, 0.0);
         pp.load("kappa3", ccz4_base_params.kappa3, 1.0);
-        pp.load("covariantZ4", ccz4_base_params.covariantZ4, true);
-        ccz4_params.kappa1 = ccz4_base_params.kappa1;
-        ccz4_params.kappa2 = ccz4_base_params.kappa2;
-        ccz4_params.kappa3 = ccz4_base_params.kappa3;
-        ccz4_params.covariantZ4 = ccz4_base_params.covariantZ4;
+        //pp.load("covariantZ4", ccz4_base_params.covariantZ4, true);
+        //ccz4_params.kappa1 = ccz4_base_params.kappa1;
+        //ccz4_params.kappa2 = ccz4_base_params.kappa2;
+        //ccz4_params.kappa3 = ccz4_base_params.kappa3;
+        //ccz4_params.covariantZ4 = ccz4_base_params.covariantZ4;
 
         // Dissipation
         pp.load("sigma", sigma, 0.1);
@@ -274,10 +274,10 @@ class SimulationParametersBase : public ChomboParameters
         }
     }
 
-  protected:
+  //protected:
     // This is just the CCZ4 damping parameters in case you want to use
     // a different gauge (with different parameters)
-    CCZ4_base_params_t ccz4_base_params;
+    //CCZ4_base_params_t ccz4_base_params;
 
   public:
     double sigma; // Kreiss-Oliger dissipation parameter
