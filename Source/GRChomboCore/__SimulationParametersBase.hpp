@@ -274,7 +274,7 @@ class SimulationParametersBase : public ChomboParameters
         }
     }
 
-  //protected:
+  protected:
     // This is just the CCZ4 damping parameters in case you want to use
     // a different gauge (with different parameters)
     CCZ4_base_params_t ccz4_base_params;

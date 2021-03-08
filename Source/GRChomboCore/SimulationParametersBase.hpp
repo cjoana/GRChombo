@@ -11,6 +11,12 @@
 #include "CCZ4.hpp"
 #include "ChomboParameters.hpp"
 #include "GRParmParse.hpp"
+#include <limits>
+
+#ifdef USE_AHFINDER
+#include "AHFinder.hpp"
+#endif
+
 #include "SphericalExtraction.hpp"
 
 // add this type alias here for backwards compatibility
@@ -117,6 +123,14 @@ class SimulationParametersBase : public ChomboParameters
         }
 
         pp.load("write_extraction", extraction_params.write_extraction, false);
+        
+        
+#ifdef USE_AHFINDER
+        // Apparent horizon parameters
+        pp.load("AH_activate", AH_activate, false);
+        if (AH_activate)
+            AH_params.read_params(pp, *this);
+#endif   
     }
 
     void check_radii()
@@ -173,6 +187,11 @@ class SimulationParametersBase : public ChomboParameters
     // Collection of parameters necessary for the CCZ4 RHS and extraction
     CCZ4::params_t ccz4_params;
     SphericalExtraction::params_t extraction_params;
+
+#ifdef USE_AHFINDER
+    bool AH_activate;
+    AHFinder::params AH_params;
+#endif
 };
 
 #endif /* SIMULATIONPARAMETERSBASE_HPP_ */
