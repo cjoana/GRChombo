@@ -98,14 +98,14 @@ void PerfectFluid<eos_t>::add_matter_rhs(
 
     FOR1(i)
     {
-        total_rhs.D +=  vars.chi * (
+        total_rhs.D +=  (
                         - vars.lapse * (d1.D[i] * vars.V[i]
                                     + my_D * d1.V[i][i])
                        - d1.lapse[i] * my_D * vars.V[i] );
                       // part of cov.derivative w.r.t. non-tilde gamma  ( = 0)
-                      // - (vars.V[i] * d1.chi[i] -  V_dot_dchi);
+                      // - (vars.V[i] * d1.chi[i] -  V_dot_dchi)/ vars.chi;
 
-        total_rhs.E +=  vars.chi * (
+        total_rhs.E +=  (
                         - vars.lapse * (d1.E[i] * vars.V[i]
                                     + vars.E * d1.V[i][i])
                        - d1.lapse[i] * vars.E * vars.V[i]
@@ -115,11 +115,11 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                        - (my_D + vars.E + vars.pressure) *
                                     vars.V[i] * d1.lapse[i];
                        // part of cov.derivative w.r.t. non-tilde gamma ( = 0)
-                       //-  (vars.V[i] * d1.chi[i] -  V_dot_dchi);
+                       //-  (vars.V[i] * d1.chi[i] -  V_dot_dchi) / vars.chi;
 
 
         total_rhs.Z[i] += advec.Z[i]
-                       + vars.chi * (
+                       + (
                        - vars.lapse * d1.pressure[i]
                        - d1.lapse[i] * vars.pressure
                        - (vars.E + my_D) * d1.lapse[i]   )
@@ -130,7 +130,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
 
     FOR2(i, j)
     {
-        total_rhs.Z[i] +=  vars.chi * (
+        total_rhs.Z[i] +=  (
                           - vars.lapse * (d1.V[j][j] * vars.Z[i] +
                                      d1.Z[i][j] * vars.V[j])        // check indices in d1.Z[i][j] (should be  D_j S_i)
                           - d1.lapse[j] * vars.V[j] * vars.Z[i] )
@@ -140,27 +140,25 @@ void PerfectFluid<eos_t>::add_matter_rhs(
             //
             // part of cov.derivative w.r.t. non-tilde gamma of S_i
            - vars.lapse * vars.V[j] *
-                 0.5 * (vars.Z[i] * d1.chi[j] + d1.chi[i] * vars.Z[j] -
-                        vars.h[i][j] * Z_dot_dchi);
+            (0.5 / vars.chi) * (vars.Z[i] * d1.chi[j] + d1.chi[i] * vars.Z[j] -
+                                vars.h[i][j] * Z_dot_dchi);
 
 
-        total_rhs.D += - vars.lapse * my_D * vars.V[j] *
-                            vars.chi * chris.ULL[i][i][j];
+        total_rhs.D += - vars.lapse * my_D * vars.V[j] * chris.ULL[i][i][j];
 
 
         total_rhs.E += - (vars.lapse * vars.E + vars.lapse * vars.pressure ) *
-                            vars.chi  * vars.V[j] * chris.ULL[i][i][j]
+                             vars.V[j] * chris.ULL[i][i][j]
                        + (my_D + vars.E + vars.pressure) *
-                            vars.lapse * vars.V[i] * vars.V[j] *
-                            K_tensor[i][j];
+                            vars.lapse * vars.V[i] * vars.V[j] * K_tensor[i][j];
 
 
         FOR1(k)
         {
           total_rhs.Z[i] += - vars.lapse * vars.Z[i] *
-                                  vars.V[j] * vars.chi * chris.ULL[k][k][j]
+                                  vars.V[j] *  chris.ULL[k][k][j]
                             + vars.lapse * vars.V[j] *
-                                  vars.Z[k] * vars.chi * chris.ULL[k][j][i];
+                                  vars.Z[k] * chris.ULL[k][j][i];
 
         }
 
