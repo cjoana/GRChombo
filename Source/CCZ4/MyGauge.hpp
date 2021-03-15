@@ -63,7 +63,7 @@ class MovingPunctureGauge
                                              vars.lapse * vars.lapse,
                                        m_params.shift_Gamma_coeff);
 
-        std::cout << "    K_mean  ::  " << K_mean  << '\n';
+        std::cout << "    K_mean  ::  " << m_params.K_mean  << '\n';
 
 
         FOR1(i)
