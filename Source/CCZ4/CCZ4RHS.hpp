@@ -37,7 +37,7 @@ struct CCZ4_base_params_t
  * gauge and damping parameters. It inherits from CCZ4_base_params_t and
  * gauge_t::params_t
  */
-template <class gauge_params_t = MyGauge::params_t>
+template <class gauge_params_t = MovingPunctureGauge::params_t>
 struct CCZ4_params_t : public CCZ4_base_params_t, public gauge_params_t
 {
 };
@@ -49,7 +49,7 @@ struct CCZ4_params_t : public CCZ4_base_params_t, public gauge_params_t
  *in its scope: CCZ4RHS::Vars (the CCZ4 variables like conformal factor,
  *conformal metric, extrinsic curvature, etc).
  **/
-template <class gauge_t = MyGauge,
+template <class gauge_t = MovingPunctureGauge,
           class deriv_t = FourthOrderDerivatives>
 class CCZ4RHS
 {

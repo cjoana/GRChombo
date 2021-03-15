@@ -17,7 +17,7 @@
  * f(lapse) = -c*lapse^(p-2)
  * and a Gamma-driver shift condition
  **/
-class MyGauge
+class MovingPunctureGauge
 {
   public:
     struct params_t
