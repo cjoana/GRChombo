@@ -59,10 +59,10 @@ class MovingPunctureGauge
                         pow(vars.lapse, m_params.lapse_power) *
                         (vars.K - m_params.K_mean - 2 * vars.Theta);
 
-        data_t gamma_coeff = m_params.shift_advec_coeff *
-                                    vars.lapse * vars.lapse;
+        data_t gamma_coeff =  simd_min(m_params.shift_advec_coeff *
+                                             vars.lapse * vars.lapse,
+                                       0.75);
 
-        gamma_coeff =  simd_min(gamma_coeff > 0.75);
 
         FOR1(i)
         {
