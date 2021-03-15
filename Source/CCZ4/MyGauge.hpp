@@ -61,7 +61,7 @@ class MovingPunctureGauge
         data_t gamma_coeff = m_params.shift_advec_coeff *
                                     vars.lapse * vars.lapse;
 
-        gamma_coeff = (gamma_coeff > 0.75) ? 0.75 : gamma_coeff;
+        gamma_coeff =  simd_min(gamma_coeff > 0.75);
 
         FOR1(i)
         {
