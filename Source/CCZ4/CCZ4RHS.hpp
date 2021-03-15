@@ -10,7 +10,7 @@
 #include "CCZ4Vars.hpp"
 #include "Cell.hpp"
 #include "FourthOrderDerivatives.hpp"
-#include "MovingPunctureGauge.hpp"
+#include "MyGauge.hpp"
 #include "Tensor.hpp"
 #include "TensorAlgebra.hpp"
 #include "simd.hpp"
