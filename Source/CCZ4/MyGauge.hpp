@@ -67,10 +67,10 @@ class MovingPunctureGauge
         FOR1(i)
         {
             rhs.shift[i] = m_params.shift_advec_coeff * advec.shift[i] +
-                           m_params.shift_Gamma_coeff * vars.B[i];
+                            vars.B[i];
             rhs.B[i] = m_params.shift_advec_coeff * advec.B[i] -
-                       gamma_coeff * advec.Gamma[i] +
-                       rhs.Gamma[i] - m_params.eta * vars.B[i];
+                       m_params.shift_advec_coeff * advec.Gamma[i] +
+                       gamma_coeff * rhs.Gamma[i] - m_params.eta * vars.B[i];
         }
     }
 
