@@ -1,1 +1,1 @@
-/home/cjoana/GRChombo/Source/CCZ4/CCZ4RHS.hpp
+CCZ4RHS.hpp
