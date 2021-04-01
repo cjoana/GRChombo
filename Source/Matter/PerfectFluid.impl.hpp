@@ -23,14 +23,14 @@ emtensor_t<data_t> PerfectFluid<eos_t>::compute_emtensor(
 
     // data_t  enthalpy = 1 + vars.energy + vars.pressure/vars.density;
     // data_t my_D = (vars.D > -vars.E)? vars.D : -vars.E;
-    data_t my_D =  simd_max(vars.D,  -vars.E + 1e-8);
+    data_t my_D =  simd_max(vars.D,  -vars.E + 1e-20);
     // data_t my_D =  vars.D;
     data_t  fluidT = my_D + vars.E + vars.pressure;
 
 
     FOR1(i)
     {
-      V_i[i] = simd_min(vars.Z[i] / fluidT, 1.0 -1e-8);
+      V_i[i] = simd_min(vars.Z[i] / fluidT, 1.0 -1e-20);
     }
 
 
@@ -79,7 +79,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     FOR2(i,j){ Z_dot_dchi += vars.Z[i] * d1.chi[j] * h_UU[i][j]; }
 
 
-    data_t my_D =  simd_max(vars.D,  -vars.E +1e-8);
+    data_t my_D =  simd_max(vars.D,  -vars.E +1e-20);
     // data_t my_D =  vars.D;
 
 	  total_rhs.D = 0;
@@ -188,7 +188,7 @@ void PerfectFluid<eos_t>::compute(
     Tensor<1, data_t> x_vec;         // primary components to optimize
 
     // up_vars.D =  (vars.D > -vars.E)? vars.D : -vars.E;
-    up_vars.D =  simd_max(vars.D,  -vars.E + 1e-8);  // return (a > b) ? a : b;
+    up_vars.D =  simd_max(vars.D,  -vars.E + 1e-20);  // return (a > b) ? a : b;
 
     // Tensor<2, data_t> cofactors;
     data_t A = vars.E + up_vars.D + vars.pressure;  // A = E + D + Pressure = density * enthalpy * W^2
@@ -306,8 +306,8 @@ void PerfectFluid<eos_t>::compute(
     }
 
     FOR1(i) {
-       up_vars.V[i] = simd_min(up_vars.V[i], 1.0 - 1e-8);
-       up_vars.V[i] = simd_max(up_vars.V[i], -1.0 + 1e-8);
+       up_vars.V[i] = simd_min(up_vars.V[i], 1.0 - 1e-20);
+       up_vars.V[i] = simd_max(up_vars.V[i], -1.0 + 1e-20);
     }
 
 
@@ -344,7 +344,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   my_eos.compute_eos(pressure, enthalpy, dpdrho, dpdenergy, up_vars);
   omega = dpdenergy/up_vars.density;
 
-  up_vars.D =   simd_max(vars.D,  -vars.E +1e-8); // (vars.D > -vars.E)? vars.D : -vars.E;
+  up_vars.D =   simd_max(vars.D,  -vars.E +1e-20); // (vars.D > -vars.E)? vars.D : -vars.E;
 
   if (omega == -1){
     fl_dens = vars.E + up_vars.D;
@@ -371,7 +371,7 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   }
 
 
-  fl_dens = (fl_dens < 1e-8 ) ? 1e-8 : fl_dens;
+  fl_dens = (fl_dens < 1e-20 ) ? 1e-20 : fl_dens;
   pressure = fl_dens*omega;
   Lorentz = sqrt( (fl_dens + pressure)/(vars.E + up_vars.D + pressure));
 
@@ -381,17 +381,17 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
     // std::cout << "   E+D ::  " << vars.E + up_vars.D   << '\n';
     // std::cout << "   in_sqrt ::  " <<
     //     (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)- 4*omega*S2  << '\n';
-    fl_dens =  1e-8;
+    fl_dens =  1e-20;
     pressure = fl_dens*omega;
     Lorentz = 1.0;
   }
 
-  // if (!(Lorentz == Lorentz) || Lorentz < 1e-8){
+  // if (!(Lorentz == Lorentz) || Lorentz < 1e-20){
   //   std::cout << "   1/W ::  " <<  Lorentz  << '\n';
   //   std::cout << "   press ::  " <<  pressure  << '\n';
   //   std::cout << "   E+D ::  " <<  vars.E + up_vars.D + pressure  << '\n';
   //
-  //   Lorentz = 1e-8;
+  //   Lorentz = 1e-20;
   // }
 
   // //DEBUG
