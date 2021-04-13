@@ -147,6 +147,10 @@ define_simd_overload(exp) define_simd_overload(exp2) define_simd_overload(sin)
                         define_simd_overload(acos) define_simd_overload(asin)
                             define_simd_overload(atan)
                                 define_binary_simd_overload(atan2)
+                                define_simd_overload(asinh)
+                                define_simd_overload(atanh)
+                                define_simd_overload(acosh)
+
 
     /* Extra pow overloads */
     template <typename t, typename t1>
