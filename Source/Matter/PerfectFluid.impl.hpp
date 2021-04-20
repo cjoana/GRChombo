@@ -354,14 +354,16 @@ void PerfectFluid<eos_t>::recover_primvars_bartropic(Cell<data_t> current_cell,
   }
 
   if (omega > 0 && omega <= 1 ){
-      in_sqrt = (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)-4*omega*S2;
+      in_sqrt = (omega-1)*(omega-1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)
+              - 4*omega*S2 + 4*omega*(vars.E + up_vars.D)*(vars.E + up_vars.D);
       in_sqrt = (in_sqrt > 0) ? in_sqrt : 0;
       fl_dens = ((omega -1)*(vars.E + up_vars.D) + sqrt(in_sqrt))/(2*omega);
   }
 
   if (omega > 1){
       data_t eplus, eminus;
-      in_sqrt = (omega +1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)-4*omega*S2;
+      in_sqrt = (omega-1)*(omega-1)*(vars.E + up_vars.D)*(vars.E + up_vars.D)
+              - 4*omega*S2 + 4*omega*(vars.E + up_vars.D)*(vars.E + up_vars.D);
       in_sqrt = (in_sqrt > 0) ? in_sqrt : 0;
 
       eplus = ((omega -1)*(vars.E + up_vars.D) +  sqrt(in_sqrt))/(2*omega);
