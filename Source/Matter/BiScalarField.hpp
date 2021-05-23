@@ -47,6 +47,12 @@ template <class potential_t = DefaultPotential> class ScalarField
         data_t phi2;
         data_t Pi2;
 
+        Tensor<2, data_t, 2> G;     // scalar field metric (IJ)
+        Tensor<2, data_t, 2> G_UU;  // inv. sf metric (IJ)
+
+        Tensor<2, data_t, 2> sf1_chris;  //  Christoffel symb ^sf1 _JK
+        Tensor<2, data_t, 2> sf2_chris;  //  Christoffel symb ^sf2 _JK
+
     };
 
     //! Structure containing the rhs variables for the matter fields
@@ -76,7 +82,6 @@ template <class potential_t = DefaultPotential> class ScalarField
     template <class data_t> struct Diff2Vars
     {
         data_t phi;
-
         data_t phi2;
 
         /// Defines the mapping between members of Vars and Chombo grid
