@@ -28,9 +28,50 @@ emtensor_t<data_t> ScalarField<potential_t>::compute_emtensor(
     vars_sf.phi2 = vars.phi2;
     vars_sf.Pi2 = vars.Pi2;
 
-    // call the function which computes the em tensor excluding the potential
-    emtensor_excl_potential(out, vars, vars_sf, d1.phi, d1.phi2, h_UU, chris_ULL);
+    vars_sf.bi_phi[0] = vars.phi;
+    vars_sf.bi_phi[1] = vars.phi2;
+    vars_sf.bi_Pi[0] = vars.Pi;
+    vars_sf.bi_Pi[1] = vars.Pi2;
 
+    // Dynamical part
+    // compute scalar field metric G_IJ
+    my_potential.compute_sfmetric(vars_sf.G, vars_sf.G_UU, vars);
+
+    data_t PiIPiJ =  vars_sf.G[0][0]*vars_sf.bi_Pi[0]*vars_sf.bi_Pi[0] +
+                     vars_sf.G[1][0]*vars_sf.bi_Pi[1]*vars_sf.bi_Pi[0] +
+                     vars_sf.G[0][1]*vars_sf.bi_Pi[0]*vars_sf.bi_Pi[1] +
+                     vars_sf.G[1][1]*vars_sf.bi_Pi[1]*vars_sf.bi_Pi[1];
+
+    data_t dyn_term = 0;
+    FOR2(i, j)
+    {
+      dyn_term += vars_sf.G[0][0]*d1.phi[i]*d1.phi[j] * h_UU[i][j]/vars.chi;
+      dyn_term += vars_sf.G[0][1]*d1.phi[i]*d1.phi2[j] * h_UU[i][j]/vars.chi;
+      dyn_term += vars_sf.G[1][0]*d1.phi2[i]*d1.phi[j] * h_UU[i][j]/vars.chi;
+      dyn_term += vars_sf.G[1][1]*d1.phi2[i]*d1.phi2[j] * h_UU[i][j]/vars.chi;
+    }
+
+    out.rho += 0.5 * PiIPiJ  +  0.5*dyn_term;
+
+    FOR2(i, j)
+    {
+        out.Sij[i][j] = - 0.5 * PiIPiJ * vars.h[i][j] / vars.chi
+                        + 0.5 * dyn_term * vars.h[i][j] / vars.chi
+                        + vars_sf.G[0][0]*d1.phi[i]*d1.phi[j]
+                        + vars_sf.G[0][1]*d1.phi[i]*d1.phi2[j]
+                        + vars_sf.G[1][0]*d1.phi2[i]*d1.phi[j]
+                        + vars_sf.G[1][1]*d1.phi2[i]*d1.phi2[j];
+    }
+
+    FOR1(i)
+    {
+      out.Si[i] = - vars_sf.G[0][0] * d1.phi[i] * vars_sf.bi_Pi[0]
+                  - vars_sf.G[0][1] * d1.phi[i] * vars_sf.bi_Pi[1]
+                  - vars_sf.G[1][0] * d1.phi2[i] * vars_sf.bi_Pi[0]
+                  - vars_sf.G[1][1] * d1.phi2[i] * vars_sf.bi_Pi[1];
+    }
+
+    // Potential part
     // set the potential values
     data_t V_of_phi = 0.0;
     data_t dVdphi = 0.0;
@@ -38,13 +79,12 @@ emtensor_t<data_t> ScalarField<potential_t>::compute_emtensor(
     data_t V_of_phi2 = 0.0;
     data_t dVdphi2 = 0.0;
 
-
     // compute potential and add constributions to EM Tensor
     my_potential.compute_potential(V_of_phi, dVdphi, V_of_phi2, dVdphi2, vars);
 
     out.rho += V_of_phi;
-    out.S += -3.0 * V_of_phi;
     FOR2(i, j) { out.Sij[i][j] += -vars.h[i][j] * V_of_phi / vars.chi;}
+    out.S = vars.chi * TensorAlgebra::compute_trace(out.Sij, h_UU);
 
     return out;
 }
@@ -113,6 +153,14 @@ void ScalarField<potential_t>::add_matter_rhs(
     vars_sf.Pi = vars.Pi;
     vars_sf.phi2 = vars.phi2;
     vars_sf.Pi2 = vars.Pi2;
+    vars_sf.bi_phi[0] = vars.phi;
+    vars_sf.bi_phi[1] = vars.phi2;
+    vars_sf.bi_Pi[0] = vars.Pi;
+    vars_sf.bi_Pi[1] = vars.Pi2;
+
+    // compute non-minimal SF-metric and SF-chris symbols 
+    my_potential.compute_sfmetric(vars_sf.G, vars_sf.G_UU, vars);
+    my_potential.compute_sfchris(vars_sf.sf1_chris, vars_sf.sf2_chris, vars);
 
     // call the function for the rhs excluding the potential
     matter_rhs_excl_potential(rhs_sf, vars, vars_sf, d1, d1.phi, d2.phi,
@@ -129,12 +177,14 @@ void ScalarField<potential_t>::add_matter_rhs(
     // compute potential
     my_potential.compute_potential(V_of_phi, dVdphi, V_of_phi2, dVdphi2, vars);
 
-    // adjust RHS for the potential term
+    // adjust RHS for the potential term  with non-minimal couplings
     total_rhs.phi = rhs_sf.phi;
-    total_rhs.Pi = rhs_sf.Pi - vars.lapse * dVdphi;
+    total_rhs.Pi = rhs_sf.Pi - vars.lapse * (vars_sf.G_UU[0][0] * dVdphi
+                                          + vars_sf.G_UU[0][1] * dVdphi2);
 
     total_rhs.phi2 = rhs_sf.phi2;
-    total_rhs.Pi2 = rhs_sf.Pi2 - vars.lapse * dVdphi2;
+    total_rhs.Pi2 = rhs_sf.Pi2 - vars.lapse * (vars_sf.G_UU[1][0] * dVdphi
+                                            + vars_sf.G_UU[1][1] * dVdphi2);
 }
 
 // the RHS excluding the potential terms
@@ -178,7 +228,36 @@ void ScalarField<potential_t>::matter_rhs_excl_potential(
             rhs_sf.Pi2 += -vars.chi * vars.lapse * h_UU[i][j] *
                          chris.ULL[k][i][j] * d1_phi2[k];
         }
+
+        // add non-minimal terms
+        rhs_sf.Pi += ( vars_sf.sf1_chris[0][0]*d1.phi[i]*d1.phi[j] * h_UU[i][j]
+                     + vars_sf.sf1_chris[0][1]*d1.phi[i]*d1.phi2[j] * h_UU[i][j]
+                     + vars_sf.sf1_chris[1][0]*d1.phi2[i]*d1.phi[j] * h_UU[i][j]
+                     + vars_sf.sf1_chris[1][1]*d1.phi2[i]*d1.phi2[j] * h_UU[i][j]
+                     ) * vars.lapse /vars.chi;
+
+       rhs_sf.Pi2 += ( vars_sf.sf2_chris[0][0]*d1.phi[i]*d1.phi[j] * h_UU[i][j]
+                     + vars_sf.sf2_chris[0][1]*d1.phi[i]*d1.phi2[j] * h_UU[i][j]
+                     + vars_sf.sf2_chris[1][0]*d1.phi2[i]*d1.phi[j] * h_UU[i][j]
+                     + vars_sf.sf2_chris[1][1]*d1.phi2[i]*d1.phi2[j] * h_UU[i][j]
+                     ) * vars.lapse /vars.chi;
     }
+
+
+
+    // add non-minimal terms
+    rhs_sf.Pi +=  ( - vars_sf.sf1_chris[0][0]*vars_sf.bi_Pi[0]*vars_sf.bi_Pi[0]
+                  - vars_sf.sf1_chris[0][1]*vars_sf.bi_Pi[0]*vars_sf.bi_Pi[1]
+                  - vars_sf.sf1_chris[1][0]*vars_sf.bi_Pi[1]*vars_sf.bi_Pi[0]
+                  - vars_sf.sf1_chris[1][1]*vars_sf.bi_Pi[1]*vars_sf.bi_Pi[1]
+                  ) * vars.lapse;
+
+    rhs_sf.Pi2 += ( - vars_sf.sf2_chris[0][0]*vars_sf.bi_Pi[0]*vars_sf.bi_Pi[0]
+                  - vars_sf.sf2_chris[0][1]*vars_sf.bi_Pi[0]*vars_sf.bi_Pi[1]
+                  - vars_sf.sf2_chris[1][0]*vars_sf.bi_Pi[1]*vars_sf.bi_Pi[0]
+                  - vars_sf.sf2_chris[1][1]*vars_sf.bi_Pi[1]*vars_sf.bi_Pi[1]
+                  ) * vars.lapse;
+
 }
 
 #endif /* BISCALARFIELD_IMPL_HPP_ */

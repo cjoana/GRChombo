@@ -47,6 +47,9 @@ template <class potential_t = DefaultPotential> class ScalarField
         data_t phi2;
         data_t Pi2;
 
+        Tensor<1, data_t, 2> bi_phi;
+        Tensor<1, data_t, 2> bi_Pi;
+
         Tensor<2, data_t, 2> G;     // scalar field metric (IJ)
         Tensor<2, data_t, 2> G_UU;  // inv. sf metric (IJ)
 
