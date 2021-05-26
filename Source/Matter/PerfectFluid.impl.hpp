@@ -106,7 +106,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                                     + my_D * d1.V[i][i])
                        - d1.lapse[i] * my_D * vars.V[i] )
                       // part of cov.derivative w.r.t. non-tilde gamma
-                      - 0.5*(2*vars.V[i] * d1.chi[i]
+                      - vars.lapse * my_D *  0.5*(2*vars.V[i] * d1.chi[i]
                                       -  V_dot_dchi/GR_SPACEDIM  )/ vars.chi;
 
         total_rhs.E +=  (
@@ -119,7 +119,8 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                        - (my_D + vars.E + vars.pressure) *
                                     vars.V[i] * d1.lapse[i]
                        // part of cov.derivative w.r.t. non-tilde gamma
-                       - 0.5*(2*vars.V[i] * d1.chi[i]
+                       - vars.lapse * (vars.E + pressure) * 0.5*
+                                        (2*vars.V[i] * d1.chi[i]
                                        -  V_dot_dchi /GR_SPACEDIM )/vars.chi;
 
 
