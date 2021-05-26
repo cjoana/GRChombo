@@ -73,7 +73,10 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     const auto chris = compute_christoffel(d1.h, h_UU);
 
     data_t V_dot_dchi = 0;
-    FOR1(i){ V_dot_dchi += vars.V[i] * d1.chi[i]; }
+    FOR1(i){
+      V_dot_dchi += vars.V[i] * d1.chi[i];
+      total_rhs.Z[i] =0;
+     }
 
     data_t Z_dot_dchi = 0;
     FOR2(i,j){ Z_dot_dchi += vars.Z[i] * d1.chi[j] * h_UU[i][j]; }
@@ -101,9 +104,10 @@ void PerfectFluid<eos_t>::add_matter_rhs(
         total_rhs.D +=  (
                         - vars.lapse * (d1.D[i] * vars.V[i]
                                     + my_D * d1.V[i][i])
-                       - d1.lapse[i] * my_D * vars.V[i] );
-                      // part of cov.derivative w.r.t. non-tilde gamma  ( = 0)
-                      // - (vars.V[i] * d1.chi[i] -  V_dot_dchi)/ vars.chi;
+                       - d1.lapse[i] * my_D * vars.V[i] )
+                      // part of cov.derivative w.r.t. non-tilde gamma
+                      - 0.5*(2*vars.V[i] * d1.chi[i]
+                                      -  V_dot_dchi/GR_SPACEDIM  )/ vars.chi;
 
         total_rhs.E +=  (
                         - vars.lapse * (d1.E[i] * vars.V[i]
@@ -113,9 +117,10 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                                     + vars.pressure * d1.V[i][i])
                        - d1.lapse[i] * vars.pressure * vars.V[i]  )
                        - (my_D + vars.E + vars.pressure) *
-                                    vars.V[i] * d1.lapse[i];
-                       // part of cov.derivative w.r.t. non-tilde gamma ( = 0)
-                       //-  (vars.V[i] * d1.chi[i] -  V_dot_dchi) / vars.chi;
+                                    vars.V[i] * d1.lapse[i]
+                       // part of cov.derivative w.r.t. non-tilde gamma
+                       - 0.5*(2*vars.V[i] * d1.chi[i]
+                                       -  V_dot_dchi /GR_SPACEDIM )/vars.chi;
 
 
         total_rhs.Z[i] += advec.Z[i]
@@ -135,8 +140,10 @@ void PerfectFluid<eos_t>::add_matter_rhs(
                                      d1.Z[i][j] * vars.V[j])        // check indices in d1.Z[i][j] (should be  D_j S_i)
                           - d1.lapse[j] * vars.V[j] * vars.Z[i] )
             //
-            // part of cov.derivative w.r.t. non-tilde gamma of V^k ( = 0)
-            // -  (vars.V[j] * d1.chi[j]  - V_dot_dchi) * vars.Z[i] *vars.lapse ;
+            // part of cov.derivative w.r.t. non-tilde gamma of V^k
+            - vars.lapse * vars.Z[i] *
+            (0.5 / vars.chi) * (2*vars.V[j]*d1.chi[j]
+                                                - V_dot_dchi/GR_SPACEDIM)
             //
             // part of cov.derivative w.r.t. non-tilde gamma of S_i
            - vars.lapse * vars.V[j] *
