@@ -99,7 +99,7 @@ void PerfectFluid<eos_t>::add_matter_rhs(
     }
 
     data_t covdV = 0;    // D_m V^m
-    FOR1(m) { covdV = - 3/(2*vars.chi)* d1.chi[m]*vars.V[m]  +  d1.V[m][m]; }
+    FOR1(m) { covdV += - 3/(2*vars.chi)* d1.chi[m]*vars.V[m]  +  d1.V[m][m]; }
 
 
 	  total_rhs.D = 0;
