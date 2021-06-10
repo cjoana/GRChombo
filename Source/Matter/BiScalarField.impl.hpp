@@ -45,18 +45,19 @@ emtensor_t<data_t> ScalarField<potential_t>::compute_emtensor(
     data_t dyn_term = 0;
     FOR2(i, j)
     {
-      dyn_term += vars_sf.G[0][0]*d1.phi[i]*d1.phi[j] * h_UU[i][j]/vars.chi;
-      dyn_term += vars_sf.G[0][1]*d1.phi[i]*d1.phi2[j] * h_UU[i][j]/vars.chi;
-      dyn_term += vars_sf.G[1][0]*d1.phi2[i]*d1.phi[j] * h_UU[i][j]/vars.chi;
-      dyn_term += vars_sf.G[1][1]*d1.phi2[i]*d1.phi2[j] * h_UU[i][j]/vars.chi;
+      dyn_term += ( vars_sf.G[0][0]*d1.phi[i]*d1.phi[j]  +
+                   vars_sf.G[0][1]*d1.phi[i]*d1.phi2[j] +
+                   vars_sf.G[1][0]*d1.phi2[i]*d1.phi[j] +
+                   vars_sf.G[1][1]*d1.phi2[i]*d1.phi2[j] )
+                   * h_UU[i][j]*vars.chi;
     }
 
-    out.rho += 0.5 * PiIPiJ  +  0.5*dyn_term;
+    out.rho = 0.5 * PiIPiJ  +  0.5*dyn_term;
 
     FOR2(i, j)
     {
-        out.Sij[i][j] = - 0.5 * PiIPiJ * vars.h[i][j] / vars.chi
-                        + 0.5 * dyn_term * vars.h[i][j] / vars.chi
+        out.Sij[i][j] = + 0.5 * PiIPiJ * vars.h[i][j] / vars.chi
+                        - 0.5 * dyn_term * vars.h[i][j] / vars.chi
                         + vars_sf.G[0][0]*d1.phi[i]*d1.phi[j]
                         + vars_sf.G[0][1]*d1.phi[i]*d1.phi2[j]
                         + vars_sf.G[1][0]*d1.phi2[i]*d1.phi[j]
@@ -89,41 +90,41 @@ emtensor_t<data_t> ScalarField<potential_t>::compute_emtensor(
     return out;
 }
 
-// Calculate the stress energy tensor elements
-template <class potential_t>
-template <class data_t, template <typename> class vars_t>
-void ScalarField<potential_t>::emtensor_excl_potential(
-    emtensor_t<data_t> &out, const vars_t<data_t> &vars,
-    const SFObject<data_t> &vars_sf, const Tensor<1, data_t> &d1_phi,
-    const Tensor<1, data_t> &d1_phi2,
-    const Tensor<2, data_t> &h_UU, const Tensor<3, data_t> &chris_ULL)
-{
-    // Useful quantity Vt
-    data_t Vt = -vars_sf.Pi * vars_sf.Pi;
-    FOR2(i, j) { Vt += vars.chi * h_UU[i][j] * d1_phi[i] * d1_phi[j]; }
-
-    data_t Vt2 = -vars_sf.Pi2 * vars_sf.Pi2;
-    FOR2(i, j) { Vt2 += vars.chi * h_UU[i][j] * d1_phi2[i] * d1_phi2[j]; }
-
-    // Calculate components of EM Tensor
-    // S_ij = T_ij
-    FOR2(i, j)
-    {
-        out.Sij[i][j] =
-            -0.5 * vars.h[i][j] * Vt / vars.chi + d1_phi[i] * d1_phi[j]
-            -0.5 * vars.h[i][j] * Vt2 / vars.chi + d1_phi2[i] * d1_phi2[j];
-    }
-
-    // S = Tr_S_ij
-    out.S = vars.chi * TensorAlgebra::compute_trace(out.Sij, h_UU);
-
-    // S_i (note lower index) = - n^a T_ai
-    FOR1(i) { out.Si[i] = -d1_phi[i] * vars_sf.Pi - d1_phi2[i] * vars_sf.Pi2; }
-
-    // rho = n^a n^b T_ab
-    out.rho = vars_sf.Pi * vars_sf.Pi + 0.5 * Vt +
-              vars_sf.Pi2 * vars_sf.Pi2 + 0.5 * Vt2;
-}
+// // Calculate the stress energy tensor elements
+// template <class potential_t>
+// template <class data_t, template <typename> class vars_t>
+// void ScalarField<potential_t>::emtensor_excl_potential(
+//     emtensor_t<data_t> &out, const vars_t<data_t> &vars,
+//     const SFObject<data_t> &vars_sf, const Tensor<1, data_t> &d1_phi,
+//     const Tensor<1, data_t> &d1_phi2,
+//     const Tensor<2, data_t> &h_UU, const Tensor<3, data_t> &chris_ULL)
+// {
+//     // Useful quantity Vt
+//     data_t Vt = -vars_sf.Pi * vars_sf.Pi;
+//     FOR2(i, j) { Vt += vars.chi * h_UU[i][j] * d1_phi[i] * d1_phi[j]; }
+//
+//     data_t Vt2 = -vars_sf.Pi2 * vars_sf.Pi2;
+//     FOR2(i, j) { Vt2 += vars.chi * h_UU[i][j] * d1_phi2[i] * d1_phi2[j]; }
+//
+//     // Calculate components of EM Tensor
+//     // S_ij = T_ij
+//     FOR2(i, j)
+//     {
+//         out.Sij[i][j] =
+//             -0.5 * vars.h[i][j] * Vt / vars.chi + d1_phi[i] * d1_phi[j]
+//             -0.5 * vars.h[i][j] * Vt2 / vars.chi + d1_phi2[i] * d1_phi2[j];
+//     }
+//
+//     // S = Tr_S_ij
+//     out.S = vars.chi * TensorAlgebra::compute_trace(out.Sij, h_UU);
+//
+//     // S_i (note lower index) = - n^a T_ai
+//     FOR1(i) { out.Si[i] = -d1_phi[i] * vars_sf.Pi - d1_phi2[i] * vars_sf.Pi2; }
+//
+//     // rho = n^a n^b T_ab
+//     out.rho = vars_sf.Pi * vars_sf.Pi + 0.5 * Vt +
+//               vars_sf.Pi2 * vars_sf.Pi2 + 0.5 * Vt2;
+//}
 
 // Adds in the RHS for the matter vars
 template <class potential_t>
@@ -158,7 +159,7 @@ void ScalarField<potential_t>::add_matter_rhs(
     vars_sf.bi_Pi[0] = vars.Pi;
     vars_sf.bi_Pi[1] = vars.Pi2;
 
-    // compute non-minimal SF-metric and SF-chris symbols 
+    // compute non-minimal SF-metric and SF-chris symbols
     my_potential.compute_sfmetric(vars_sf.G, vars_sf.G_UU, vars);
     my_potential.compute_sfchris(vars_sf.sf1_chris, vars_sf.sf2_chris, vars);
 
@@ -230,17 +231,17 @@ void ScalarField<potential_t>::matter_rhs_excl_potential(
         }
 
         // add non-minimal terms
-        rhs_sf.Pi += ( vars_sf.sf1_chris[0][0]*d1.phi[i]*d1.phi[j] * h_UU[i][j]
-                     + vars_sf.sf1_chris[0][1]*d1.phi[i]*d1.phi2[j] * h_UU[i][j]
-                     + vars_sf.sf1_chris[1][0]*d1.phi2[i]*d1.phi[j] * h_UU[i][j]
-                     + vars_sf.sf1_chris[1][1]*d1.phi2[i]*d1.phi2[j] * h_UU[i][j]
-                     ) * vars.lapse /vars.chi;
+        rhs_sf.Pi += ( vars_sf.sf1_chris[0][0]*d1.phi[i]*d1.phi[j]
+                     + vars_sf.sf1_chris[0][1]*d1.phi[i]*d1.phi2[j]
+                     + vars_sf.sf1_chris[1][0]*d1.phi2[i]*d1.phi[j]
+                     + vars_sf.sf1_chris[1][1]*d1.phi2[i]*d1.phi2[j]
+                   ) * vars.lapse * h_UU[i][j] * vars.chi;
 
-       rhs_sf.Pi2 += ( vars_sf.sf2_chris[0][0]*d1.phi[i]*d1.phi[j] * h_UU[i][j]
-                     + vars_sf.sf2_chris[0][1]*d1.phi[i]*d1.phi2[j] * h_UU[i][j]
-                     + vars_sf.sf2_chris[1][0]*d1.phi2[i]*d1.phi[j] * h_UU[i][j]
-                     + vars_sf.sf2_chris[1][1]*d1.phi2[i]*d1.phi2[j] * h_UU[i][j]
-                     ) * vars.lapse /vars.chi;
+       rhs_sf.Pi2 += ( vars_sf.sf2_chris[0][0]*d1.phi[i]*d1.phi[j]
+                     + vars_sf.sf2_chris[0][1]*d1.phi[i]*d1.phi2[j]
+                     + vars_sf.sf2_chris[1][0]*d1.phi2[i]*d1.phi[j]
+                     + vars_sf.sf2_chris[1][1]*d1.phi2[i]*d1.phi2[j]
+                   ) * vars.lapse * h_UU[i][j] * vars.chi;
     }
 
 

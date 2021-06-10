@@ -107,20 +107,20 @@ template <class potential_t = DefaultPotential> class ScalarField
         const Tensor<3, data_t> &chris_ULL)
         const; //!< the conformal christoffel symbol
 
-    //! The function which calculates the EM Tensor, given the vars and
-    //! derivatives, excluding the potential
-    template <class data_t, template <typename> class vars_t>
-    static void emtensor_excl_potential(
-        emtensor_t<data_t> &out,         //!< the em tensor output
-        const vars_t<data_t> &vars,      //!< the value of the variables
-        const SFObject<data_t> &vars_sf, //!< the value of the sf variables
-        const Tensor<1, data_t>
-            &d1_phi,                   //!< the value of the first deriv of phi
-        const Tensor<1, data_t>
-            &d1_phi2,                  //!< the value of the first deriv of phi
-        const Tensor<2, data_t> &h_UU, //!< the inverse metric (raised indices).
-        const Tensor<3, data_t>
-            &chris_ULL); //!< the conformal christoffel symbol
+    // //! The function which calculates the EM Tensor, given the vars and
+    // //! derivatives, excluding the potential
+    // template <class data_t, template <typename> class vars_t>
+    // static void emtensor_excl_potential(
+    //     emtensor_t<data_t> &out,         //!< the em tensor output
+    //     const vars_t<data_t> &vars,      //!< the value of the variables
+    //     const SFObject<data_t> &vars_sf, //!< the value of the sf variables
+    //     const Tensor<1, data_t>
+    //         &d1_phi,                   //!< the value of the first deriv of phi
+    //     const Tensor<1, data_t>
+    //         &d1_phi2,                  //!< the value of the first deriv of phi
+    //     const Tensor<2, data_t> &h_UU, //!< the inverse metric (raised indices).
+    //     const Tensor<3, data_t>
+    //         &chris_ULL); //!< the conformal christoffel symbol
 
     //! The function which adds in the RHS for the matter field vars,
     //! including the potential
